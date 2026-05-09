@@ -1,0 +1,63 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Each release is tagged in git.
+
+---
+
+## [Unreleased] — Sprint 0
+
+### Added
+
+- Repository scaffold: `README.md`, `LICENSE` (Apache 2.0), `.gitignore`, `CONTRIBUTING.md`
+- `.env.example` — all env vars across all 7 sprints, with comments and REQUIRED/OPTIONAL markers
+- `.pre-commit-config.yaml` — gitleaks, shellcheck, shfmt, prettier
+- `CLAUDE.md` — project-specific AI agent context (<200 lines)
+- `session.sh` — Mac clipboard context generator for Claude sessions
+- `.claude/settings.json` — committed hooks and permissions
+- `.claude/commands/` — `/project:review`, `/project:fix-issue`, `/project:deploy` slash commands
+- `docs/PROJECT_BRIEF.md` — live project state document (v0.0.1)
+- `docs/CLAUDE_SYSTEM_PROMPT.md` — master engineering standards prompt
+- `docs/SESSION_STARTER.md` — per-task context template
+- `docs/DECISION_LOG.md` — ADR-001 through ADR-010 (fully written)
+- `docs/architecture.md` — current state (nothing built), deferred components
+- `docs/install.md` — skeleton with section headings
+- `docs/operations.md` — skeleton with section headings
+- `docs/student-onboarding.md` — skeleton with section headings
+- `docs/security.md` — skeleton with section headings
+- `docs/runbooks/` — placeholder directory
+- `docs/sprint-reports/sprint-0.md` — completion report
+- `.github/workflows/lint.yml` — prettier, shellcheck, shfmt on push/PR
+- `.github/workflows/secrets.yml` — gitleaks on push/PR
+- `tests/smoke/smoke-test.sh` — placeholder smoke test
+- Empty scaffolding dirs: `infra/`, `scripts/`, `scripts/lib/`, `student-starter/`,
+  `templates/`, `services/`
+
+### Architecture decisions recorded
+
+- ADR-001: LiteLLM as the only LLM gateway
+- ADR-002: Single VM + Docker Compose (not Kubernetes)
+- ADR-003: Postgres as the only database
+- ADR-004: Caddy for HTTPS
+- ADR-005: Firebase Hosting for student sites
+- ADR-006: Open WebUI for chat UI
+- ADR-007: Continue.dev as in-IDE student AI
+- ADR-008: Custom Founder Console for cohort operations
+- ADR-009: Three-layer budget caps
+- ADR-010: Slack as primary alerting channel
+
+---
+
+## Template for future releases
+
+```
+## [vX.Y.Z] — Sprint N — YYYY-MM-DD
+
+### Added
+### Changed
+### Fixed
+### Removed
+### Security
+```

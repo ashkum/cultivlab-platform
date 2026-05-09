@@ -1,0 +1,113 @@
+name: Lint
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint — prettier, shellcheck, shfmt
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Tool installation ────────────────────────────────────────────────
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck
+
+      - name: Install shfmt
+        run: |
+          SHFMT_VERSION="3.8.0"
+          curl -sSL "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64" \
+            -o /usr/local/bin/shfmt
+          chmod +x /usr/local/bin/shfmt
+
+      - name: Set up Node (for prettier)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install prettier
+        run: npm install -g prettier@3
+
+      # ── Lint checks ──────────────────────────────────────────────────────
+      - name: shellcheck — lint all shell scripts
+        run: |
+          find . \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            \( -name '*.sh' -o -name 'session.sh' \) \
+            -print0 \
+          | xargs -0 --no-run-if-empty shellcheck --severity=warning
+
+      - name: shfmt — check shell script formatting
+        run: |
+          find . \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            \( -name '*.sh' -o -name 'session.sh' \) \
+            -print0 \
+          | xargs -0 --no-run-if-empty shfmt -d -i 2 -ci
+
+      - name: prettier — check markdown formatting
+        run: |
+          find . \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            -name '*.md' \
+            -print0 \
+          | xargs -0 --no-run-if-empty prettier --check \
+              --prose-wrap always \
+              --print-width 100
+
+      # ── .env.example sync check ──────────────────────────────────────────
+      # Fail if any file in the repo references an env var (${VAR} or $VAR pattern)
+      # that is not documented in .env.example.
+      # This is a best-effort heuristic: catches obvious drift.
+      - name: Check .env.example sync
+        run: |
+          # Extract var names referenced in shell/yaml/config files (${VAR_NAME} style)
+          REFERENCED=$(grep -rhoE '\$\{[A-Z][A-Z0-9_]+\}' \
+            --include='*.sh' --include='*.yml' --include='*.yaml' \
+            --exclude-dir='.git' --exclude-dir='node_modules' \
+            . \
+            | grep -oE '[A-Z][A-Z0-9_]+' | sort -u)
+
+          # Extract var names defined in .env.example
+          DEFINED=$(grep -E '^[A-Z][A-Z0-9_]+=.*' .env.example \
+            | cut -d= -f1 | sort -u)
+
+          # Find vars referenced but not defined in .env.example
+          MISSING=$(comm -23 \
+            <(echo "$REFERENCED") \
+            <(echo "$DEFINED"))
+
+          # Known exceptions: vars set by CI itself, loop variables, etc.
+          EXCEPTIONS="HOME PATH USER SHELL PWD CI GITHUB_"
+          FILTERED=""
+          for VAR in $MISSING; do
+            SKIP=false
+            for EX in $EXCEPTIONS; do
+              if [[ "$VAR" == ${EX}* ]]; then
+                SKIP=true
+                break
+              fi
+            done
+            if [[ "$SKIP" == false ]]; then
+              FILTERED="${FILTERED} ${VAR}"
+            fi
+          done
+
+          if [[ -n "$FILTERED" ]]; then
+            echo "::error::These env vars are referenced in code but missing from .env.example:"
+            echo "$FILTERED" | tr ' ' '\n' | grep -v '^$'
+            exit 1
+          fi
+
+          echo "✓ .env.example sync check passed"
