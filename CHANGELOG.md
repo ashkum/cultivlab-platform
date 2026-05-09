@@ -7,7 +7,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ---
 
-## [Unreleased] — Sprint 0
+## [Unreleased]
+
+## [v0.2.0] — 2026-05-09 — Sprint 2 wrap
+
+### Added
+
+- `scripts/provision-cohort.sh` — idempotent cohort team + per-student virtual key provisioning from
+  `students.csv`
+- `scripts/lib/litellm_admin.sh` — LiteLLM admin API wrapper (team + key CRUD, dry-run support)
+- `scripts/lib/students_csv.sh` — pure-bash CSV parser with validation + iteration
+- `scripts/test-slack-alerts.sh` — smoke tests all 5 Slack webhook channels
+- `templates/students.csv.example` — 3-row CSV with placeholder data
+- `docs/install.md` §6 — provider master-cap setup, cohort provisioning, Slack verification, key
+  management
+- `LITELLM_ADMIN_URL` env var (defaults to `https://api.${DOMAIN}`)
+
+### Changed
+
+- CI bootstrap workflow uses `python -c "urllib.request.urlopen(...)"` instead of curl (LiteLLM
+  image is wolfi-based, no curl)
+- Pre-commit prettier hook switched to `rbubley/mirrors-prettier` v3.8.3 to match CI version exactly
+- All pre-commit hook versions updated via `pre-commit autoupdate`
+- `.env.example` sync check narrowed to `infra/docker-compose.yml` + `infra/Caddyfile.tmpl` (was
+  scanning shell scripts and producing false positives on internal vars)
+
+### Fixed
+
+- shellcheck SC2034 warnings on lib files (added `# shellcheck disable=SC2034 # used externally`
+  directives)
+- shellcheck SC2155 warning in `session.sh` (split `readonly REPO_ROOT="$(cmd)"` into two lines)
+- Executable bits restored on `session.sh` and `scripts/lib/common.sh` (lost during awk-based edits)
+- `.DS_Store` files removed from repo and added to `.gitignore`
 
 ### Added
 

@@ -1,7 +1,12 @@
 # Sprint 2 — Completion Report
 
-**Date:** 2026-05-09 **Version:** v0.2.0 **Status:** Code complete. Pending operator verification on
-the live VM (acceptance criteria checklist below).
+**Date:** 2026-05-09 **Version:** v0.2.0 **Status:** Code complete and CI-validated. Pending
+operator verification on real GCP (deployment phase).
+
+**CI verification:** `Lint`, `Secret Scan`, and `CI — bootstrap` workflows all green on main as of
+commit `c42abaa` (CI — bootstrap) and `a4fa6fc` (Lint + Secret Scan). The bootstrap workflow
+successfully spins up postgres + postgres-init + LiteLLM on a fresh Ubuntu 24.04 runner and verifies
+LiteLLM is healthy via `/health/liveliness`.
 
 ---
 
