@@ -126,7 +126,8 @@ end state.
 |---|---|---|---|
 | GCP VM (e2-small) | Hosts core Docker Compose stack | Sprint 1 | **Built** |
 | Caddy | TLS termination, reverse proxy | Sprint 1 | **Built** |
-| LiteLLM Proxy | Unified LLM gateway, virtual keys, budgets | Sprint 1 (deployed) / Sprint 2 (keys) | **Built** (no virtual keys yet) |
+| LiteLLM Proxy | Unified LLM gateway, virtual keys, budgets | Sprint 1 (deployed) / Sprint 2 (keys) | **Built** |
+| LiteLLM cohort team | Logical grouping in LiteLLM carrying `COHORT_MAX_BUDGET` / `COHORT_SOFT_BUDGET`; per-student virtual keys are members | Sprint 2 | **Built** (provisioned by `scripts/provision-cohort.sh`) |
 | Postgres | Shared database for all services | Sprint 1 | **Built** |
 | postgres-init | One-shot anchor; future hook for extensions | Sprint 1 | **Built** (no-op) |
 | Open WebUI | Student-facing chat interface | Sprint 3 | Not built |

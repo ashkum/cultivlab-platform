@@ -1,7 +1,7 @@
 # CultivLab Platform — Project Brief
 
 **Living document. Update at the start of every sprint.**
-Last updated: Sprint 1 — v0.1.0
+Last updated: Sprint 2 — v0.2.0
 
 ---
 
@@ -121,12 +121,13 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.1.0** — Sprint 1
+**v0.2.0** — Sprint 2
 
-Foundation deployed: GCP VM with static IP, Docker Compose stack of Caddy + LiteLLM +
-Postgres + postgres-init, three providers wired (Anthropic, OpenAI, Vertex AI),
-five Slack alert channels routed, IP-locked admin UI. No virtual keys, no Open WebUI,
-no students yet — those land in Sprints 2 and 3.
+Cohort provisioning deployed: `scripts/provision-cohort.sh` reads `students.csv` and
+creates one LiteLLM team carrying `COHORT_MAX_BUDGET` plus one virtual key per student
+carrying per-student caps and rate limits. Plaintext keys land in `cohort-keys-${COHORT_NAME}.csv`
+(mode 0600, gitignored). Provider master-caps documented per-provider; Slack alert wiring
+smoke-tested across all five channels. No Open WebUI, no students logging in yet — Sprint 3.
 
 ---
 
@@ -136,6 +137,7 @@ no students yet — those land in Sprints 2 and 3.
 |---|---|---|---|
 | v0.0.1 | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline |
 | v0.1.0 | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200 |
+| v0.2.0 | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6 |
 
 ---
 
@@ -145,15 +147,18 @@ None at Sprint 0. Issues are tracked in GitHub Issues.
 
 ---
 
-## Next up — Sprint 2
+## Next up — Sprint 3
 
-**Goal:** Per-student virtual keys, three-layer budget caps wired in LiteLLM, daily/weekly
-spend reports flowing to Slack. The platform shifts from "foundation up" to "ready to
-take real traffic with budget protection."
+**Goal:** Open WebUI deployed at `chat.${DOMAIN}`, one student account per row in
+`students.csv` linked to that student's LiteLLM virtual key, kid-mode system prompt
+locked in, moderation pipeline wired to `#cultivlab-safety`. The platform shifts from
+"keys exist" to "kids can log in and chat".
 
-Sprint 2 deliverables (preview — formal task brief at sprint start):
-- `scripts/provision-cohort.sh` — generates virtual keys per student from `students.csv`
-- LiteLLM team budgets configured (`COHORT_MAX_BUDGET`)
-- Provider master-cap setup documented in `docs/install.md` §6
-- Slack alert smoke test (one fake budget breach per channel)
-- Sprint 2 sprint report
+Sprint 3 deliverables (preview — formal task brief at sprint start):
+- Open WebUI service added to the Docker Compose stack at `chat.${DOMAIN}`
+- `scripts/provision-students.sh` — creates one Open WebUI account per student, links to
+  the per-student LiteLLM virtual key from Sprint 2's `cohort-keys-${COHORT_NAME}.csv`
+- Kid-mode default system prompt; `ENABLE_SIGNUP=false`; file upload + web search disabled
+- Moderation pipeline routing flagged content to `SLACK_WEBHOOK_SAFETY`
+- Onboarding card generator (PDF per student: chat URL + virtual key)
+- Sprint 3 sprint report

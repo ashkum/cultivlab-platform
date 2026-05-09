@@ -123,6 +123,34 @@ jobs:
           echo "compose ps:"
           docker compose ps -a
 
+      # ── Sprint 2 — provision-cohort dry-run ───────────────────────────────
+      # Exercises validation + dry-run code paths (no network calls). Real key
+      # creation requires a live LiteLLM master key, which CI does not have.
+      - name: provision-cohort.sh --dry-run (Sprint 2)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          STUDENTS_CSV="$(mktemp)"
+          cat > "$STUDENTS_CSV" <<'EOF'
+          name,email,slug,parent_email
+          CI Alex,ci-alex@example.com,ci-alex,ci-parent-alex@example.com
+          CI Bea,ci-bea@example.com,ci-bea,ci-parent-bea@example.com
+          EOF
+          export DOMAIN=ci.example.com
+          export LITELLM_MASTER_KEY=sk-ci-stub-master-key
+          export COHORT_NAME=ci-cohort COHORT_SIZE=2
+          export COHORT_MAX_BUDGET=200.00 COHORT_SOFT_BUDGET=150.00
+          export STUDENT_MAX_BUDGET=10.00 STUDENT_SOFT_BUDGET=8.00
+          export STUDENT_DAILY_BUDGET=2.00 STUDENT_WEEKLY_BUDGET=8.00
+          export STUDENT_RPM_LIMIT=60 STUDENT_TPM_LIMIT=50000
+          export STUDENTS_CSV_PATH="$STUDENTS_CSV"
+          ./scripts/provision-cohort.sh --dry-run
+          if [ -f "$(dirname "$STUDENTS_CSV")/cohort-keys-ci-cohort.csv" ]; then
+            echo "::error::dry-run wrote cohort-keys CSV — should be no-op"
+            exit 1
+          fi
+          echo "✓ provision-cohort.sh --dry-run passed (no CSV written)"
+
       - name: Dump logs on failure
         if: failure()
         working-directory: infra

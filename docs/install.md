@@ -17,6 +17,7 @@ You need the following on your laptop (the "operator's machine") before running 
 | `bash`              | 5.0+ (or 3.2)   | macOS ships 3.2 — fine. Optional upgrade: `brew install bash`                    |
 | `curl`              | any             | shipped with macOS                                                               |
 | `dig` or `nslookup` | any             | shipped with macOS (`dig` via `brew install bind` if missing)                    |
+| `jq`                | 1.6             | `brew install jq` (Ubuntu 24.04 ships it; required by `provision-cohort.sh` from Sprint 2) |
 | `pre-commit`        | 3.7             | `brew install pre-commit` (run `pre-commit install` once after cloning the repo) |
 
 You also need:
@@ -247,10 +248,106 @@ Common first-run issues:
 
 ## 6. LiteLLM and provider configuration
 
-_Filled in Sprint 2._
+This section covers the work that happens **after** Sprint 1 bootstrap but **before** the
+first student logs in. Three things, in order:
 
-Setting up provider API keys, verifying all three providers (Anthropic, OpenAI, Vertex AI)
-respond via curl, configuring Slack alert webhooks.
+1. Set provider master-account caps (third layer of ADR-009).
+2. Provision the cohort (one team + one virtual key per student).
+3. Verify Slack alert wiring across all five channels.
+
+### 6.1 Set provider master-account caps
+
+These caps live **outside** the platform and cannot be bypassed even if LiteLLM, the VM,
+or a virtual key is compromised. Set them once before each cohort.
+
+**Anthropic** (`https://console.anthropic.com`):
+1. Open **Settings → Plans & Billing**.
+2. Under **Usage limits**, set a **monthly hard limit**. Anthropic blocks all requests on the
+   account once the limit is reached.
+3. Recommended starting cap: 1.5 × (`COHORT_MAX_BUDGET` × duration / 4 weeks) — enough
+   headroom for retries and operator testing, well below uncapped exposure.
+
+**OpenAI** (`https://platform.openai.com`):
+1. Open **Settings → Limits**.
+2. Set **Monthly budget** (hard cap — OpenAI rejects requests when reached).
+3. Optional but recommended: set the **email notification threshold** to 80% so you get
+   warned before requests start failing.
+
+**GCP / Vertex AI** (`https://console.cloud.google.com/billing/budgets`):
+1. Open **Billing → Budgets & alerts**.
+2. Create a new budget, scope it to your CultivLab project's billing account, and filter
+   **services** to **Vertex AI API**.
+3. Set the budget amount and tick **alert at 50% / 90% / 100%** of actual spend. GCP does
+   not auto-stop services on budget exhaustion — set up a **Pub/Sub topic + Cloud
+   Function** to disable the API key on the 100% alert if you want a true hard cap. For
+   MVP cohorts, the 90% email alert plus LiteLLM's per-cohort cap is sufficient.
+
+### 6.2 Provision the cohort
+
+Done from your laptop, against the live VM. The script reads `students.csv` and creates
+one LiteLLM team plus one virtual key per student.
+
+```bash
+# 1. Copy the template (real students.csv is gitignored — keep it outside the repo).
+cp templates/students.csv.example ~/cultivlab-cohort/students.csv
+
+# 2. Fill in real student rows (name, email, slug, parent_email, optional overrides).
+#    See templates/students.csv.example for the schema and constraints.
+$EDITOR ~/cultivlab-cohort/students.csv
+
+# 3. Point .env at it.
+echo 'STUDENTS_CSV_PATH=~/cultivlab-cohort/students.csv' >> .env  # or edit by hand
+
+# 4. Dry-run first — validates students.csv, prints intended actions, makes zero changes.
+./scripts/provision-cohort.sh --dry-run
+
+# 5. Live run.
+./scripts/provision-cohort.sh
+```
+
+The live run writes `cohort-keys-${COHORT_NAME}.csv` next to your `students.csv`, mode
+`0600`. Each row maps a slug to its plaintext virtual key. Plaintext keys cannot be
+retrieved later — back this file up before you distribute the keys to students (see §6.4).
+
+The script is idempotent: re-running reconciles team and key budgets/limits without
+creating duplicates. If a key already exists in LiteLLM but isn't in the recorded CSV
+(e.g. you lost the file), the script logs a warning and omits that row — re-issue the
+key manually via the LiteLLM admin UI in that case.
+
+Exit codes: `0` all rows succeeded, `1` setup failure (env / CSV / network), `2` partial
+success — re-run to retry the failed rows.
+
+### 6.3 Verify Slack alert wiring
+
+```bash
+./scripts/test-slack-alerts.sh --dry-run   # confirms env is loaded
+./scripts/test-slack-alerts.sh             # posts one test message per channel
+```
+
+Each of the five channels should receive a message labeled `[CultivLab Sprint 2 smoke
+test] #cultivlab-<channel>`. If a webhook returns `404`, the URL is no longer valid —
+regenerate it in **Slack admin → Apps → Manage → Incoming Webhooks**, paste the new
+URL into `.env` under the matching `SLACK_WEBHOOK_*` var, redeploy LiteLLM (`docker
+compose up -d` on the VM picks up the new env), and re-run the test.
+
+Note: `SLACK_WEBHOOK_SAFETY` is the moderation channel. LiteLLM doesn't route to it
+yet — Sprint 3's moderation flow wires it up. The smoke test confirms only that the
+webhook itself is live, not that LiteLLM will post to it. The other four channels are
+exercised end-to-end by LiteLLM's native budget / spend / exception / DB alerts and you
+will see real traffic on them once students start using the platform.
+
+### 6.4 Where the keys live
+
+The output file `cohort-keys-${COHORT_NAME}.csv`:
+
+- lives in the same directory as `students.csv` (whatever `STUDENTS_CSV_PATH` points at);
+- is gitignored (the repo `.gitignore` covers `cohort-keys*.csv` and `students*.csv`);
+- has columns `slug,name,email,parent_email,key,key_alias`;
+- is mode `0600` — only the operator's user can read it.
+
+Distribute keys to students out-of-band: printed onboarding cards (Sprint 3) are the
+default. Never email or Slack a plaintext virtual key. If a key leaks, block it in the
+LiteLLM admin UI (`https://admin.${DOMAIN}/ui` → Virtual Keys → Block) and re-issue.
 
 ---
 

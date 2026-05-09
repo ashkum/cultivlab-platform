@@ -1,0 +1,19 @@
+# students.csv.example — copy to your students.csv (outside the repo) and fill in.
+#
+# Required columns (any order): name, email, slug, parent_email
+# Optional override columns (defaults from .env applied if missing or blank):
+#   max_budget, daily_budget, weekly_budget, rpm_limit, tpm_limit
+#
+# Constraints:
+#   - slug must match ^[a-z][a-z0-9-]{2,30}$ (used as a metadata key and, in
+#     Sprint 4, as a DNS-safe student subdomain)
+#   - no commas allowed inside any field (the parser rejects rows where the
+#     field count != header column count)
+#   - no duplicate slugs or emails
+#   - row count must equal COHORT_SIZE in .env
+#
+# Lines starting with # are ignored.
+name,email,slug,parent_email,max_budget,daily_budget,weekly_budget,rpm_limit,tpm_limit
+Alex Park,alex.park@example.com,alex-park,parent.park@example.com,15.00,3.00,12.00,90,75000
+Bea Chen,bea.chen@example.com,bea-chen,parent.chen@example.com,,,,,
+Cam Lee,cam.lee@example.com,cam-lee,parent.lee@example.com,12.00,,,,
