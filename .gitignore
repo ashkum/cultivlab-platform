@@ -104,3 +104,4 @@ temp/
 cohort-keys*.csv
 students*.csv
 onboarding-cards/
+.DS_Store
