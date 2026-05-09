@@ -30,4 +30,4 @@ repos:
       - id: prettier
         name: prettier (markdown formatting)
         types: [markdown]
-        args: [--prose-wrap=always, --print-width=100]
+        args: ["--prose-wrap", "always", "--print-width", "100"]
