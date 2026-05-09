@@ -1,8 +1,8 @@
 # CultivLab Platform
 
-A self-deployable, multi-tenant AI platform. The first use case is a **kids' AI literacy lab**:
-a 3-week cohort for ages 8–12 where students chat with frontier LLMs, write code with AI
-assistance, and deploy static websites to their own public URLs.
+A self-deployable, multi-tenant AI platform. The first use case is a **kids' AI literacy lab**: a
+3-week cohort for ages 8–12 where students chat with frontier LLMs, write code with AI assistance,
+and deploy static websites to their own public URLs.
 
 Any operator with a GCP account, a domain, and provider API keys can run their own instance.
 
@@ -19,10 +19,9 @@ Any operator with a GCP account, a domain, and provider API keys can run their o
 
 ## What the operator does
 
-Stand up the platform, provision student accounts and budgets, monitor daily usage, top up
-budgets as needed, and run the cohort cleanup at the end. The Founder Console at
-`https://founder.${DOMAIN}` provides a single-page view with pause/resume/top-up controls
-for every student.
+Stand up the platform, provision student accounts and budgets, monitor daily usage, top up budgets
+as needed, and run the cohort cleanup at the end. The Founder Console at `https://founder.${DOMAIN}`
+provides a single-page view with pause/resume/top-up controls for every student.
 
 ---
 
@@ -36,9 +35,8 @@ founder.${DOMAIN}   → Founder Console  (operator, IP-locked)
 <slug>.${DOMAIN}    → Firebase Hosting (12 student static sites)
 ```
 
-All services run as Docker Compose containers on a single GCP e2-small VM. Caddy handles
-HTTPS automatically. Postgres is the single database for LiteLLM, Open WebUI, and the
-Founder Console.
+All services run as Docker Compose containers on a single GCP e2-small VM. Caddy handles HTTPS
+automatically. Postgres is the single database for LiteLLM, Open WebUI, and the Founder Console.
 
 See `docs/architecture.md` for the current state diagram and decision log.
 
@@ -46,8 +44,8 @@ See `docs/architecture.md` for the current state diagram and decision log.
 
 ## 5-minute quickstart (placeholder — real steps in Sprint 1)
 
-> **Sprint 0 only — no infrastructure exists yet.** The quickstart below is the intended
-> flow; actual scripts are built in Sprint 1.
+> **Sprint 0 only — no infrastructure exists yet.** The quickstart below is the intended flow;
+> actual scripts are built in Sprint 1.
 
 ```bash
 # 1. Clone and configure
@@ -112,13 +110,13 @@ See `CHANGELOG.md` for full version history.
 
 ## Cost
 
-| Phase | Monthly cost |
-|---|---|
-| Platform idle (no students) | ~$20–25 |
-| During a 12-student cohort | ~$50–150 |
+| Phase                       | Monthly cost |
+| --------------------------- | ------------ |
+| Platform idle (no students) | ~$20–25      |
+| During a 12-student cohort  | ~$50–150     |
 
-Hard budget controls are enforced at three layers: per-student, cohort-wide, and per provider
-master account. See `docs/operations.md` for the cost control runbook.
+Hard budget controls are enforced at three layers: per-student, cohort-wide, and per provider master
+account. See `docs/operations.md` for the cost control runbook.
 
 ---
 

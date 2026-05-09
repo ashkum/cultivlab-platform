@@ -1,18 +1,17 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.**
-Last updated: Sprint 2 — v0.2.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 2 — v0.2.0
 
 ---
 
 ## What it is
 
-CultivLab is a self-deployable, multi-tenant AI platform. The first use case is a 3-week AI
-literacy cohort for ages 8–12. Students chat with frontier LLMs (Claude, ChatGPT, Gemini),
-write code with AI assistance in VS Code, and deploy static websites to personal subdomains.
+CultivLab is a self-deployable, multi-tenant AI platform. The first use case is a 3-week AI literacy
+cohort for ages 8–12. Students chat with frontier LLMs (Claude, ChatGPT, Gemini), write code with AI
+assistance in VS Code, and deploy static websites to personal subdomains.
 
-Any operator with a GCP account, a domain, and provider API keys can clone this repo and run
-their own instance.
+Any operator with a GCP account, a domain, and provider API keys can clone this repo and run their
+own instance.
 
 ---
 
@@ -20,32 +19,32 @@ their own instance.
 
 Sprint 1 deploys two of the five subdomains. The rest land in Sprints 3, 4, and 5.5.
 
-| Subdomain | Service | Status |
-|---|---|---|
-| `chat.${DOMAIN}` | Open WebUI | Not deployed (Sprint 3) |
-| `api.${DOMAIN}` | LiteLLM proxy | **Deployed** |
-| `admin.${DOMAIN}` | LiteLLM admin UI | **Deployed** (IP-locked) |
-| `founder.${DOMAIN}` | Founder Console | Not deployed (Sprint 5.5) |
-| `<slug>.${DOMAIN}` | Student static sites | Not deployed (Sprint 4) |
+| Subdomain           | Service              | Status                    |
+| ------------------- | -------------------- | ------------------------- |
+| `chat.${DOMAIN}`    | Open WebUI           | Not deployed (Sprint 3)   |
+| `api.${DOMAIN}`     | LiteLLM proxy        | **Deployed**              |
+| `admin.${DOMAIN}`   | LiteLLM admin UI     | **Deployed** (IP-locked)  |
+| `founder.${DOMAIN}` | Founder Console      | Not deployed (Sprint 5.5) |
+| `<slug>.${DOMAIN}`  | Student static sites | Not deployed (Sprint 4)   |
 
 ---
 
 ## Stack
 
-| Layer | Technology | Version | Sprint |
-|---|---|---|---|
-| Cloud | GCP (Compute Engine, Firebase Hosting) | — | Sprint 1 / 4 |
-| VM | e2-small, Ubuntu 24.04 | — | Sprint 1 |
-| Reverse proxy / TLS | Caddy | `${CADDY_VERSION}` | Sprint 1 |
-| LLM gateway | LiteLLM Proxy | `${LITELLM_VERSION}` | Sprint 2 |
-| Chat UI | Open WebUI | `${OPENWEBUI_VERSION}` | Sprint 3 |
-| Database | Postgres (+ pgvector Sprint 4+) | `${POSTGRES_VERSION}` | Sprint 1 |
-| Operator console | Founder Console (FastAPI + HTMX) | internal | Sprint 5.5 |
-| Observability | Langfuse | `${LANGFUSE_VERSION}` | Sprint 4 |
-| Container orchestration | Docker Compose (single VM) | — | Sprint 1 |
-| LLM providers | Anthropic · OpenAI · Vertex AI Gemini | — | Sprint 2 |
-| Student site hosting | Firebase Hosting | — | Sprint 4 |
-| IDE AI assistant | Continue.dev (OpenAI-compatible) | — | Sprint 4 |
+| Layer                   | Technology                             | Version                | Sprint       |
+| ----------------------- | -------------------------------------- | ---------------------- | ------------ |
+| Cloud                   | GCP (Compute Engine, Firebase Hosting) | —                      | Sprint 1 / 4 |
+| VM                      | e2-small, Ubuntu 24.04                 | —                      | Sprint 1     |
+| Reverse proxy / TLS     | Caddy                                  | `${CADDY_VERSION}`     | Sprint 1     |
+| LLM gateway             | LiteLLM Proxy                          | `${LITELLM_VERSION}`   | Sprint 2     |
+| Chat UI                 | Open WebUI                             | `${OPENWEBUI_VERSION}` | Sprint 3     |
+| Database                | Postgres (+ pgvector Sprint 4+)        | `${POSTGRES_VERSION}`  | Sprint 1     |
+| Operator console        | Founder Console (FastAPI + HTMX)       | internal               | Sprint 5.5   |
+| Observability           | Langfuse                               | `${LANGFUSE_VERSION}`  | Sprint 4     |
+| Container orchestration | Docker Compose (single VM)             | —                      | Sprint 1     |
+| LLM providers           | Anthropic · OpenAI · Vertex AI Gemini  | —                      | Sprint 2     |
+| Student site hosting    | Firebase Hosting                       | —                      | Sprint 4     |
+| IDE AI assistant        | Continue.dev (OpenAI-compatible)       | —                      | Sprint 4     |
 
 ---
 
@@ -80,10 +79,11 @@ cultivlab-platform/
 
 ## Data model
 
-Nothing exists yet. Data model is introduced in Sprint 1 (Postgres schema) and Sprint 2
-(LiteLLM virtual keys and spend logs).
+Nothing exists yet. Data model is introduced in Sprint 1 (Postgres schema) and Sprint 2 (LiteLLM
+virtual keys and spend logs).
 
 Key tables (Sprint 1+):
+
 - `LiteLLM_SpendLogs` — every LLM request with cost, model, user
 - `LiteLLM_VerificationToken` — virtual keys with budgets and metadata
 - `LiteLLM_TeamTable` — cohort-level team budget
@@ -95,23 +95,23 @@ Key tables (Sprint 1+):
 
 Nothing deployed yet. Expected routes (Sprint 2+):
 
-| Route | Service | Auth |
-|---|---|---|
-| `GET /health` | LiteLLM | None |
-| `POST /v1/chat/completions` | LiteLLM | Virtual key |
-| `GET /v1/models` | LiteLLM | Virtual key |
-| `POST /key/generate` | LiteLLM admin API | Master key |
-| `POST /key/block` | LiteLLM admin API | Master key |
-| `POST /key/update` | LiteLLM admin API | Master key |
-| `GET /api/cohort/summary` | Founder Console | Founder auth |
-| `POST /api/students/<slug>/pause` | Founder Console | Founder auth |
+| Route                             | Service           | Auth         |
+| --------------------------------- | ----------------- | ------------ |
+| `GET /health`                     | LiteLLM           | None         |
+| `POST /v1/chat/completions`       | LiteLLM           | Virtual key  |
+| `GET /v1/models`                  | LiteLLM           | Virtual key  |
+| `POST /key/generate`              | LiteLLM admin API | Master key   |
+| `POST /key/block`                 | LiteLLM admin API | Master key   |
+| `POST /key/update`                | LiteLLM admin API | Master key   |
+| `GET /api/cohort/summary`         | Founder Console   | Founder auth |
+| `POST /api/students/<slug>/pause` | Founder Console   | Founder auth |
 
 ---
 
 ## Env vars
 
-All env vars are documented in `.env.example` with REQUIRED/OPTIONAL markers and comments.
-Reference that file — it is the single source of truth.
+All env vars are documented in `.env.example` with REQUIRED/OPTIONAL markers and comments. Reference
+that file — it is the single source of truth.
 
 Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `POSTGRES_PASSWORD`, `FOUNDER_ADMIN_EMAIL`,
@@ -123,21 +123,21 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 **v0.2.0** — Sprint 2
 
-Cohort provisioning deployed: `scripts/provision-cohort.sh` reads `students.csv` and
-creates one LiteLLM team carrying `COHORT_MAX_BUDGET` plus one virtual key per student
-carrying per-student caps and rate limits. Plaintext keys land in `cohort-keys-${COHORT_NAME}.csv`
-(mode 0600, gitignored). Provider master-caps documented per-provider; Slack alert wiring
-smoke-tested across all five channels. No Open WebUI, no students logging in yet — Sprint 3.
+Cohort provisioning deployed: `scripts/provision-cohort.sh` reads `students.csv` and creates one
+LiteLLM team carrying `COHORT_MAX_BUDGET` plus one virtual key per student carrying per-student caps
+and rate limits. Plaintext keys land in `cohort-keys-${COHORT_NAME}.csv` (mode 0600, gitignored).
+Provider master-caps documented per-provider; Slack alert wiring smoke-tested across all five
+channels. No Open WebUI, no students logging in yet — Sprint 3.
 
 ---
 
 ## Version history
 
-| Version | Sprint | Date | Summary |
-|---|---|---|---|
-| v0.0.1 | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline |
-| v0.1.0 | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200 |
-| v0.2.0 | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6 |
+| Version | Sprint   | Date       | Summary                                                                                         |
+| ------- | -------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| v0.0.1  | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                             |
+| v0.1.0  | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                  |
+| v0.2.0  | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6 |
 
 ---
 
@@ -149,15 +149,15 @@ None at Sprint 0. Issues are tracked in GitHub Issues.
 
 ## Next up — Sprint 3
 
-**Goal:** Open WebUI deployed at `chat.${DOMAIN}`, one student account per row in
-`students.csv` linked to that student's LiteLLM virtual key, kid-mode system prompt
-locked in, moderation pipeline wired to `#cultivlab-safety`. The platform shifts from
-"keys exist" to "kids can log in and chat".
+**Goal:** Open WebUI deployed at `chat.${DOMAIN}`, one student account per row in `students.csv`
+linked to that student's LiteLLM virtual key, kid-mode system prompt locked in, moderation pipeline
+wired to `#cultivlab-safety`. The platform shifts from "keys exist" to "kids can log in and chat".
 
 Sprint 3 deliverables (preview — formal task brief at sprint start):
+
 - Open WebUI service added to the Docker Compose stack at `chat.${DOMAIN}`
-- `scripts/provision-students.sh` — creates one Open WebUI account per student, links to
-  the per-student LiteLLM virtual key from Sprint 2's `cohort-keys-${COHORT_NAME}.csv`
+- `scripts/provision-students.sh` — creates one Open WebUI account per student, links to the
+  per-student LiteLLM virtual key from Sprint 2's `cohort-keys-${COHORT_NAME}.csv`
 - Kid-mode default system prompt; `ENABLE_SIGNUP=false`; file upload + web search disabled
 - Moderation pipeline routing flagged content to `SLACK_WEBHOOK_SAFETY`
 - Onboarding card generator (PDF per student: chat URL + virtual key)

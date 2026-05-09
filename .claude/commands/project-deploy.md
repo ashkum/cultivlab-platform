@@ -4,14 +4,15 @@ Pre-deploy checklist and smoke test. Real deployment is not available until Spri
 
 ## Current state (Sprint 0)
 
-No infrastructure exists yet. Running this command produces the pre-deploy checklist only.
-Actual deployment steps are added sprint by sprint as infrastructure is built.
+No infrastructure exists yet. Running this command produces the pre-deploy checklist only. Actual
+deployment steps are added sprint by sprint as infrastructure is built.
 
 ---
 
 ## Pre-deploy checklist (run before every deployment)
 
 ### Repository state
+
 - [ ] All changes committed and pushed
 - [ ] CI passes on the current branch (lint + secrets)
 - [ ] `pre-commit run --all-files` clean locally
@@ -19,6 +20,7 @@ Actual deployment steps are added sprint by sprint as infrastructure is built.
 - [ ] `CHANGELOG.md` [Unreleased] section is up to date
 
 ### Configuration
+
 - [ ] `.env` on the VM has all REQUIRED vars from `.env.example`
 - [ ] No placeholder values remain in `.env` (search for "placeholder")
 - [ ] Provider API keys verified (quick curl test to each)
@@ -26,6 +28,7 @@ Actual deployment steps are added sprint by sprint as infrastructure is built.
 - [ ] `FOUNDER_ALLOWED_IP` is set to your current IP
 
 ### Pre-deployment snapshot (Sprint 1+)
+
 ```bash
 # Take a VM snapshot before any risky deployment
 # ./scripts/snapshot-vm.sh "pre-deploy-$(date +%Y%m%d-%H%M)"

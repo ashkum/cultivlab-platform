@@ -24,6 +24,7 @@ if [[ -z "${CULTIVLAB_COMMON_LOADED:-}" ]]; then
 fi
 
 STUDENTS_CSV_REQUIRED_COLS=(name email slug parent_email)
+# shellcheck disable=SC2034 # iterated by students_csv_iter via name reference
 STUDENTS_CSV_OPTIONAL_COLS=(max_budget daily_budget weekly_budget rpm_limit tpm_limit)
 STUDENTS_CSV_SLUG_REGEX='^[a-z][a-z0-9-]{2,30}$'
 
@@ -36,7 +37,7 @@ _CSV_HEADER_FIELDS=0
 _students_csv_index_of() {
   local name="$1"
   local i
-  for (( i = 0; i < ${#_CSV_HEADER_NAMES[@]}; i++ )); do
+  for ((i = 0; i < ${#_CSV_HEADER_NAMES[@]}; i++)); do
     if [[ "${_CSV_HEADER_NAMES[$i]}" == "${name}" ]]; then
       printf '%s' "$i"
       return 0
@@ -62,7 +63,7 @@ _students_csv_split() {
   local __out="$1"
   local __line="$2"
   local __parts
-  IFS=',' read -ra __parts <<< "${__line},__CSV_SENTINEL__"
+  IFS=',' read -ra __parts <<<"${__line},__CSV_SENTINEL__"
   unset "__parts[$((${#__parts[@]} - 1))]"
   # Reassign as a contiguous array under the caller's chosen name.
   eval "${__out}=(\"\${__parts[@]+\"\${__parts[@]}\"}\")"
@@ -94,9 +95,11 @@ _students_csv_parse_header() {
 # Resolves an optional column's value for the current row, falling back to
 # <default> when the column isn't in the header or the cell is empty.
 _students_csv_optional_value() {
-  local col_name="$1"; shift
-  local default="$1"; shift
-  shift  # discard "--"
+  local col_name="$1"
+  shift
+  local default="$1"
+  shift
+  shift # discard "--"
   local fields_array=("$@")
 
   local idx
@@ -215,7 +218,7 @@ students_csv_validate() {
     seen_emails+=("${email}")
 
     data_rows=$((data_rows + 1))
-  done < "${path}"
+  done <"${path}"
 
   if [[ "${header_parsed}" -eq 0 ]]; then
     log_error "students.csv has no header row"
@@ -286,7 +289,7 @@ students_csv_iter() {
 
     "${callback}" "${name}" "${email}" "${slug}" "${parent_email}" \
       "${max_budget}" "${daily_budget}" "${weekly_budget}" "${rpm_limit}" "${tpm_limit}"
-  done < "${path}"
+  done <"${path}"
 
   return 0
 }

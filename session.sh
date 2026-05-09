@@ -14,7 +14,8 @@
 set -euo pipefail
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_ROOT
 readonly CLAUDE_MD="${REPO_ROOT}/CLAUDE.md"
 readonly PROJECT_BRIEF="${REPO_ROOT}/docs/PROJECT_BRIEF.md"
 
@@ -44,7 +45,7 @@ wrap_file() {
 estimate_tokens() {
   local chars
   chars=$(printf '%s' "$1" | wc -c | tr -d ' ')
-  echo $(( chars / CHARS_PER_TOKEN ))
+  echo $((chars / CHARS_PER_TOKEN))
 }
 
 # ── Build context ──────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ for ARG in "$@"; do
   fi
 
   wrap_file "${DISPLAY_PATH}" "${ABS_PATH}"
-  (( EXTRA_COUNT++ )) || true
+  ((EXTRA_COUNT++)) || true
 done
 
 # ── Copy to clipboard ─────────────────────────────────────────────────────────

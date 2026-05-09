@@ -83,7 +83,7 @@ SUFFIXES=(
 
 failures=0
 
-for (( i = 0; i < ${#LABELS[@]}; i++ )); do
+for ((i = 0; i < ${#LABELS[@]}; i++)); do
   label="${LABELS[$i]}"
   url="${URLS[$i]}"
   suffix="${SUFFIXES[$i]}"

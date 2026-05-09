@@ -1,7 +1,7 @@
 # CultivLab — Student Onboarding Guide
 
-**Status:** Skeleton — filled in Sprint 4.
-This document is what the operator walks students through on Day 1.
+**Status:** Skeleton — filled in Sprint 4. This document is what the operator walks students through
+on Day 1.
 
 ---
 
@@ -9,8 +9,8 @@ This document is what the operator walks students through on Day 1.
 
 _Filled in Sprint 4._
 
-Hardware requirements (laptop, not Chromebook), software to install in advance, what to
-bring to the first session.
+Hardware requirements (laptop, not Chromebook), software to install in advance, what to bring to the
+first session.
 
 ---
 
@@ -18,8 +18,8 @@ bring to the first session.
 
 _Filled in Sprint 3/4._
 
-What is on the card: chat URL, login credentials, virtual API key, personal site URL.
-Where to keep it safe.
+What is on the card: chat URL, login credentials, virtual API key, personal site URL. Where to keep
+it safe.
 
 ---
 
@@ -52,9 +52,9 @@ Installing Continue.dev and Live Server from the VS Code marketplace. Screenshot
 
 _Filled in Sprint 4._
 
-Where to find the Continue.dev config file, how to paste the API base URL
-(`https://api.${DOMAIN}`) and the student's virtual key. Verification: ask a coding question
-inside VS Code and confirm a response arrives.
+Where to find the Continue.dev config file, how to paste the API base URL (`https://api.${DOMAIN}`)
+and the student's virtual key. Verification: ask a coding question inside VS Code and confirm a
+response arrives.
 
 ---
 
@@ -62,8 +62,8 @@ inside VS Code and confirm a response arrives.
 
 _Filled in Sprint 4._
 
-How to download the starter project zip (distributed by the operator). Where to unzip it.
-Overview of the files: `index.html`, `style.css`, `script.js`, `deploy.sh`.
+How to download the starter project zip (distributed by the operator). Where to unzip it. Overview
+of the files: `index.html`, `style.css`, `script.js`, `deploy.sh`.
 
 ---
 
@@ -71,8 +71,8 @@ Overview of the files: `index.html`, `style.css`, `script.js`, `deploy.sh`.
 
 _Filled in Sprint 4._
 
-How to open the project folder in VS Code and start Live Server. How to view the site in a
-browser at `localhost:5500`.
+How to open the project folder in VS Code and start Live Server. How to view the site in a browser
+at `localhost:5500`.
 
 ---
 
@@ -89,8 +89,8 @@ How to open a terminal in VS Code, run `./deploy.sh`, and see the site go live a
 
 _Filled in Sprint 4._
 
-The edit → preview → deploy loop. How to use AI chat for ideas. How to use Continue.dev for
-coding help. Saving work.
+The edit → preview → deploy loop. How to use AI chat for ideas. How to use Continue.dev for coding
+help. Saving work.
 
 ---
 
@@ -98,5 +98,5 @@ coding help. Saving work.
 
 _Filled in Sprint 4._
 
-What to do if the chat interface shows an error, if the budget is exceeded, if the deploy
-fails, or if VS Code behaves unexpectedly. Who to contact.
+What to do if the chat interface shows an error, if the budget is exceeded, if the deploy fails, or
+if VS Code behaves unexpectedly. Who to contact.

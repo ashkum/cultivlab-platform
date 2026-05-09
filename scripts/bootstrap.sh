@@ -169,8 +169,8 @@ render_caddyfile() {
   fi
   FOUNDER_ALLOWED_IP="${normalized_ip}" \
     envsubst '${DOMAIN} ${FOUNDER_ADMIN_EMAIL} ${FOUNDER_ALLOWED_IP}' \
-    < "${WORK_DIR}/Caddyfile.tmpl" \
-    > "${WORK_DIR}/Caddyfile"
+    <"${WORK_DIR}/Caddyfile.tmpl" \
+    >"${WORK_DIR}/Caddyfile"
   log_info "Caddyfile rendered ($(wc -l <"${WORK_DIR}/Caddyfile") lines)"
 }
 

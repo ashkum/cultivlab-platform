@@ -121,6 +121,7 @@ parse_common_args() {
         CULTIVLAB_DRY_RUN=1
         ;;
       --help | -h)
+        # shellcheck disable=SC2034 # used by callers that source this file
         CULTIVLAB_HELP=1
         ;;
     esac

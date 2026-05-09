@@ -39,10 +39,16 @@ fi
 CSV_OVERRIDE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --csv)     CSV_OVERRIDE="${2:-}"; shift 2 ;;
-    --csv=*)   CSV_OVERRIDE="${1#--csv=}"; shift ;;
-    --dry-run|--help|-h) shift ;;
-    *)         shift ;;
+    --csv)
+      CSV_OVERRIDE="${2:-}"
+      shift 2
+      ;;
+    --csv=*)
+      CSV_OVERRIDE="${1#--csv=}"
+      shift
+      ;;
+    --dry-run | --help | -h) shift ;;
+    *) shift ;;
   esac
 done
 
@@ -112,22 +118,30 @@ if litellm_team_get "${COHORT_NAME}"; then
   CURR_MAX="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.max_budget // 0) | tonumber')"
   CURR_SOFT="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.soft_budget // 0) | tonumber')"
   if [[ -z "${TEAM_ID}" ]]; then
-    log_error "team found but missing team_id: ${LITELLM_LAST_BODY}"; exit 1
+    log_error "team found but missing team_id: ${LITELLM_LAST_BODY}"
+    exit 1
   fi
   log_info "team exists id=${TEAM_ID} max=${CURR_MAX} soft=${CURR_SOFT}"
-  if ! _amount_eq "${CURR_MAX}" "${COHORT_MAX_BUDGET}" \
-     || ! _amount_eq "${CURR_SOFT}" "${COHORT_SOFT_BUDGET}"; then
+  if ! _amount_eq "${CURR_MAX}" "${COHORT_MAX_BUDGET}" ||
+    ! _amount_eq "${CURR_SOFT}" "${COHORT_SOFT_BUDGET}"; then
     log_info "updating team: max ${CURR_MAX}->${COHORT_MAX_BUDGET}, soft ${CURR_SOFT}->${COHORT_SOFT_BUDGET}"
-    litellm_team_update "${TEAM_ID}" "${COHORT_MAX_BUDGET}" "${COHORT_SOFT_BUDGET}" \
-      || { log_error "team update failed"; exit 1; }
+    litellm_team_update "${TEAM_ID}" "${COHORT_MAX_BUDGET}" "${COHORT_SOFT_BUDGET}" ||
+      {
+        log_error "team update failed"
+        exit 1
+      }
   fi
 else
   log_info "team '${COHORT_NAME}' not found, creating"
-  litellm_team_create "${COHORT_NAME}" "${COHORT_MAX_BUDGET}" "${COHORT_SOFT_BUDGET}" \
-    || { log_error "team create failed"; exit 1; }
+  litellm_team_create "${COHORT_NAME}" "${COHORT_MAX_BUDGET}" "${COHORT_SOFT_BUDGET}" ||
+    {
+      log_error "team create failed"
+      exit 1
+    }
   TEAM_ID="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '.team_id // empty')"
   if [[ -z "${TEAM_ID}" ]]; then
-    log_error "team created but response missing team_id: ${LITELLM_LAST_BODY}"; exit 1
+    log_error "team created but response missing team_id: ${LITELLM_LAST_BODY}"
+    exit 1
   fi
   log_info "team created id=${TEAM_ID}"
 fi
@@ -139,19 +153,22 @@ if [[ -f "${COHORT_KEYS_CSV}" ]]; then
   log_info "loading existing cohort-keys.csv: ${COHORT_KEYS_CSV}"
   ec_first=1
   while IFS= read -r line || [[ -n "${line}" ]]; do
-    if [[ ${ec_first} -eq 1 ]]; then ec_first=0; continue; fi
+    if [[ ${ec_first} -eq 1 ]]; then
+      ec_first=0
+      continue
+    fi
     if [[ -z "$(printf '%s' "${line}" | tr -d '[:space:]')" ]]; then continue; fi
-    IFS=',' read -ra ec_parts <<< "${line},__EOL__"
+    IFS=',' read -ra ec_parts <<<"${line},__EOL__"
     unset "ec_parts[$((${#ec_parts[@]} - 1))]"
     EXISTING_SLUGS+=("${ec_parts[0]:-}")
     EXISTING_KEYS+=("${ec_parts[4]:-}")
-  done < "${COHORT_KEYS_CSV}"
+  done <"${COHORT_KEYS_CSV}"
   log_info "loaded ${#EXISTING_SLUGS[@]} existing key rows"
 fi
 
 _existing_key_for_slug() {
   local slug="$1" i
-  for (( i = 0; i < ${#EXISTING_SLUGS[@]}; i++ )); do
+  for ((i = 0; i < ${#EXISTING_SLUGS[@]}; i++)); do
     if [[ "${EXISTING_SLUGS[$i]}" == "${slug}" ]]; then
       printf '%s' "${EXISTING_KEYS[$i]}"
       return 0
@@ -200,10 +217,10 @@ provision_one() {
     curr_rpm="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.rpm_limit // 0) | tonumber')"
     curr_tpm="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.tpm_limit // 0) | tonumber')"
 
-    if ! _amount_eq "${curr_max}"  "${max_b}" \
-       || ! _amount_eq "${curr_soft}" "${STUDENT_SOFT_BUDGET}" \
-       || ! _amount_eq "${curr_rpm}"  "${rpm}" \
-       || ! _amount_eq "${curr_tpm}"  "${tpm}"; then
+    if ! _amount_eq "${curr_max}" "${max_b}" ||
+      ! _amount_eq "${curr_soft}" "${STUDENT_SOFT_BUDGET}" ||
+      ! _amount_eq "${curr_rpm}" "${rpm}" ||
+      ! _amount_eq "${curr_tpm}" "${tpm}"; then
       log_info "row slug=${slug}: updating key budgets/limits"
       if ! litellm_key_update "${token}" "${max_b}" "${STUDENT_SOFT_BUDGET}" "${rpm}" "${tpm}" "${metadata}"; then
         log_error "row slug=${slug}: key update failed"
@@ -231,7 +248,7 @@ provision_one() {
 
   log_info "row slug=${slug}: creating new key"
   if ! litellm_key_create "${TEAM_ID}" "${key_alias}" "${metadata}" \
-       "${max_b}" "${STUDENT_SOFT_BUDGET}" "${rpm}" "${tpm}"; then
+    "${max_b}" "${STUDENT_SOFT_BUDGET}" "${rpm}" "${tpm}"; then
     log_error "row slug=${slug}: key create failed"
     return 1
   fi
@@ -270,7 +287,7 @@ else
   TMP_CSV="${COHORT_KEYS_CSV}.tmp"
   {
     printf 'slug,name,email,parent_email,key,key_alias\n'
-    for (( i = 0; i < ${#RESULT_SLUGS[@]}; i++ )); do
+    for ((i = 0; i < ${#RESULT_SLUGS[@]}; i++)); do
       printf '%s,%s,%s,%s,%s,%s\n' \
         "${RESULT_SLUGS[$i]}" \
         "${RESULT_NAMES[$i]}" \
@@ -279,7 +296,7 @@ else
         "${RESULT_KEYS[$i]}" \
         "${RESULT_ALIASES[$i]}"
     done
-  } > "${TMP_CSV}"
+  } >"${TMP_CSV}"
   mv "${TMP_CSV}" "${COHORT_KEYS_CSV}"
   chmod 600 "${COHORT_KEYS_CSV}"
   log_info "wrote ${#RESULT_SLUGS[@]} rows to ${COHORT_KEYS_CSV} (mode 0600)"

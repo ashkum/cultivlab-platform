@@ -6,9 +6,9 @@ AI agent context. Read this file completely at the start of every session.
 
 ## What this is
 
-CultivLab is a self-deployable, multi-tenant AI platform. The first use case is a 3-week AI
-literacy cohort for ages 8–12: students chat with Claude/ChatGPT/Gemini, write code with AI
-assistance in VS Code, and deploy static sites to `<slug>.${DOMAIN}`.
+CultivLab is a self-deployable, multi-tenant AI platform. The first use case is a 3-week AI literacy
+cohort for ages 8–12: students chat with Claude/ChatGPT/Gemini, write code with AI assistance in VS
+Code, and deploy static sites to `<slug>.${DOMAIN}`.
 
 No operator-specific values (domain name, real keys, real student names) belong in this repo.
 Everything operator-specific lives in `.env` or outside the repo entirely.
@@ -17,8 +17,8 @@ Everything operator-specific lives in `.env` or outside the repo entirely.
 
 ## Current state
 
-**Version:** v0.0.1 — Sprint 0 (repository scaffold only). **Nothing runs yet.**
-**Next sprint:** Sprint 1 — GCP foundation, VM, Caddy, Postgres, LiteLLM.
+**Version:** v0.0.1 — Sprint 0 (repository scaffold only). **Nothing runs yet.** **Next sprint:**
+Sprint 1 — GCP foundation, VM, Caddy, Postgres, LiteLLM.
 
 See `docs/PROJECT_BRIEF.md` for the living project state. Update it every sprint.
 
@@ -59,12 +59,12 @@ When implementing infrastructure or scripts, also read `docs/architecture.md` an
 
 - **Commit prefix:** `[sprint-0]`, `[sprint-1]`, etc. Imperative subject. Under 72 chars.
 - **Confirm the current sprint** before coding. Never build ahead into a future sprint.
-- **Stay in MVP scope.** If a task implies Appendix A (deferred platform features), stop
-  and ask the operator before proceeding.
-- **Before writing code:** state what changes, list files touched, flag side effects.
-  Ask if anything is unclear.
-- **After writing code:** self-review for bugs and edge cases, list follow-ups, state what
-  needs manual testing.
+- **Stay in MVP scope.** If a task implies Appendix A (deferred platform features), stop and ask the
+  operator before proceeding.
+- **Before writing code:** state what changes, list files touched, flag side effects. Ask if
+  anything is unclear.
+- **After writing code:** self-review for bugs and edge cases, list follow-ups, state what needs
+  manual testing.
 
 ---
 
@@ -78,12 +78,12 @@ founder.${DOMAIN}  → Founder Console  (operator, IP-locked)    [Sprint 5.5]
 <slug>.${DOMAIN}   → Firebase Hosting (student static sites)   [Sprint 4]
 ```
 
-Core stack: Single GCP e2-small VM → Docker Compose → Caddy + LiteLLM + Postgres +
-Open WebUI + Founder Console. Postgres is the only database for all services.
+Core stack: Single GCP e2-small VM → Docker Compose → Caddy + LiteLLM + Postgres + Open WebUI +
+Founder Console. Postgres is the only database for all services.
 
-Key decisions: LiteLLM is the **only** LLM gateway — no direct provider calls anywhere.
-Three-layer budget caps per student (daily / weekly / total) plus cohort cap plus provider
-master cap. Full decision log: `docs/DECISION_LOG.md`.
+Key decisions: LiteLLM is the **only** LLM gateway — no direct provider calls anywhere. Three-layer
+budget caps per student (daily / weekly / total) plus cohort cap plus provider master cap. Full
+decision log: `docs/DECISION_LOG.md`.
 
 ---
 
@@ -96,18 +96,18 @@ master cap. Full decision log: `docs/DECISION_LOG.md`.
 - Do not introduce npm or Python packages without operator approval.
 - Do not skip `--dry-run` on any provisioning or destructive script.
 - Do not push to `main` directly — PRs only, CI must pass.
-- Do not build deferred platform features (RAG, agents, billing, evals) until the cohort
-  validates demand and the operator writes a new PRD for the next iteration.
+- Do not build deferred platform features (RAG, agents, billing, evals) until the cohort validates
+  demand and the operator writes a new PRD for the next iteration.
 
 ---
 
 ## Quick reference
 
-| What you need            | Where to find it                        |
-| ------------------------ | --------------------------------------- |
-| All env vars             | `.env.example`                          |
-| Architecture decisions   | `docs/DECISION_LOG.md`                  |
-| Current project state    | `docs/PROJECT_BRIEF.md`                 |
-| Full install steps       | `docs/install.md`                       |
-| Ops runbooks             | `docs/operations.md`, `docs/runbooks/`  |
-| Session context builder  | `./session.sh [file1] [file2] ...`      |
+| What you need           | Where to find it                       |
+| ----------------------- | -------------------------------------- |
+| All env vars            | `.env.example`                         |
+| Architecture decisions  | `docs/DECISION_LOG.md`                 |
+| Current project state   | `docs/PROJECT_BRIEF.md`                |
+| Full install steps      | `docs/install.md`                      |
+| Ops runbooks            | `docs/operations.md`, `docs/runbooks/` |
+| Session context builder | `./session.sh [file1] [file2] ...`     |

@@ -1,7 +1,7 @@
 # CultivLab — Master Engineering Standards Prompt
 
-Paste this at the start of every Claude session before giving a task.
-Pair it with the output of `./session.sh` for full context.
+Paste this at the start of every Claude session before giving a task. Pair it with the output of
+`./session.sh` for full context.
 
 ---
 

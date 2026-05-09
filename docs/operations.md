@@ -1,7 +1,7 @@
 # CultivLab — Operations Runbook
 
-**Status:** Skeleton — sections filled in sprint by sprint.
-For incident-specific procedures, see `docs/runbooks/`.
+**Status:** Skeleton — sections filled in sprint by sprint. For incident-specific procedures, see
+`docs/runbooks/`.
 
 ---
 
@@ -9,8 +9,8 @@ For incident-specific procedures, see `docs/runbooks/`.
 
 _Filled in Sprint 5._
 
-Morning check (5 min): Founder Console dashboard review, Slack channel scan, budget status.
-Evening check (5 min): daily spend report review, budget adjustments if needed.
+Morning check (5 min): Founder Console dashboard review, Slack channel scan, budget status. Evening
+check (5 min): daily spend report review, budget adjustments if needed.
 
 ---
 
@@ -18,8 +18,8 @@ Evening check (5 min): daily spend report review, budget adjustments if needed.
 
 _Filled in Sprint 5._
 
-Weekly tasks: `docs/PROJECT_BRIEF.md` update, `decision-gate.md` signal review,
-incident log review, Postgres backup verification.
+Weekly tasks: `docs/PROJECT_BRIEF.md` update, `decision-gate.md` signal review, incident log review,
+Postgres backup verification.
 
 ---
 
@@ -27,8 +27,8 @@ incident log review, Postgres backup verification.
 
 _Filled in Sprint 5._
 
-Daily automated Postgres dump to GCS. Retention policy. How to verify a backup is valid.
-VM snapshot procedure before risky operations (`scripts/snapshot-vm.sh`).
+Daily automated Postgres dump to GCS. Retention policy. How to verify a backup is valid. VM snapshot
+procedure before risky operations (`scripts/snapshot-vm.sh`).
 
 ---
 
@@ -36,8 +36,8 @@ VM snapshot procedure before risky operations (`scripts/snapshot-vm.sh`).
 
 _Filled in Sprint 5. Full procedure in `docs/runbooks/restore.md`._
 
-How to restore Postgres from a GCS dump. How to restore the VM from a snapshot.
-Estimated recovery time. How to verify restoration was successful.
+How to restore Postgres from a GCS dump. How to restore the VM from a snapshot. Estimated recovery
+time. How to verify restoration was successful.
 
 ---
 
@@ -45,8 +45,8 @@ Estimated recovery time. How to verify restoration was successful.
 
 _Filled in Sprint 1._
 
-Starting, stopping, and restarting individual containers. Viewing logs. Checking container
-health. Upgrading a single container to a new pinned version.
+Starting, stopping, and restarting individual containers. Viewing logs. Checking container health.
+Upgrading a single container to a new pinned version.
 
 ```bash
 # Common commands (filled in Sprint 1)
@@ -62,8 +62,8 @@ health. Upgrading a single container to a new pinned version.
 
 _Filled in Sprint 1 (procedure), updated each sprint._
 
-How to upgrade container versions: update the version env var in `.env`, pull new image,
-restart the affected container, verify health. Rollback procedure if upgrade fails.
+How to upgrade container versions: update the version env var in `.env`, pull new image, restart the
+affected container, verify health. Rollback procedure if upgrade fails.
 
 ---
 
@@ -71,8 +71,8 @@ restart the affected container, verify health. Rollback procedure if upgrade fai
 
 _Filled in Sprint 6._
 
-Pre-cohort steps: fresh VM snapshot, verify all 12 student keys, verify all 12 sites deploy,
-verify Slack alerts fire, verify daily summary delivers, verify console loads on mobile.
+Pre-cohort steps: fresh VM snapshot, verify all 12 student keys, verify all 12 sites deploy, verify
+Slack alerts fire, verify daily summary delivers, verify console loads on mobile.
 
 ---
 
@@ -89,8 +89,8 @@ Running `scripts/cohort-status.sh`, taking a final snapshot, running
 
 _Filled in Sprint 6. Full flowchart in `docs/runbooks/incident-response.md`._
 
-Decision tree: provider down → VM down → student abuse → cost spike. Each branch with
-step-by-step resolution and escalation path.
+Decision tree: provider down → VM down → student abuse → cost spike. Each branch with step-by-step
+resolution and escalation path.
 
 ---
 

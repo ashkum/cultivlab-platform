@@ -32,8 +32,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 - `.github/workflows/lint.yml` — prettier, shellcheck, shfmt on push/PR
 - `.github/workflows/secrets.yml` — gitleaks on push/PR
 - `tests/smoke/smoke-test.sh` — placeholder smoke test
-- Empty scaffolding dirs: `infra/`, `scripts/`, `scripts/lib/`, `student-starter/`,
-  `templates/`, `services/`
+- Empty scaffolding dirs: `infra/`, `scripts/`, `scripts/lib/`, `student-starter/`, `templates/`,
+  `services/`
 
 ### Architecture decisions recorded
 

@@ -1,7 +1,7 @@
 # Session Starter Template
 
-Use this template to brief Claude at the start of every task. Copy, fill in the sections,
-and paste after the system prompt and project context.
+Use this template to brief Claude at the start of every task. Copy, fill in the sections, and paste
+after the system prompt and project context.
 
 Generate the project context automatically with:
 

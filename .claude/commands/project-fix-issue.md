@@ -16,8 +16,8 @@ Workflow for fetching a GitHub issue, planning the fix, implementing it, and pre
 gh issue view <issue-number> --json title,body,labels,assignees,comments
 ```
 
-Print the full issue title, body, and any comments. Confirm you understand what is being
-asked before proceeding.
+Print the full issue title, body, and any comments. Confirm you understand what is being asked
+before proceeding.
 
 ### 2. Identify affected files
 
@@ -35,8 +35,7 @@ State the following before writing any code:
 - **New env vars:** any new env vars (will need `.env.example` update)
 - **Unclear:** anything ambiguous — stop and ask rather than assume
 
-Wait for operator confirmation if the plan involves more than 3 files or any architectural
-decision.
+Wait for operator confirmation if the plan involves more than 3 files or any architectural decision.
 
 ### 4. Implement
 

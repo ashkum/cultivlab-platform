@@ -22,7 +22,10 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No Colour
 
 pass() { echo -e "${GREEN}✓${NC}  $1"; }
-fail() { echo -e "${RED}✗${NC}  $1"; FAILED=$((FAILED + 1)); }
+fail() {
+  echo -e "${RED}✗${NC}  $1"
+  FAILED=$((FAILED + 1))
+}
 skip() { echo -e "${YELLOW}—${NC}  $1 (not yet implemented)"; }
 
 FAILED=0
@@ -70,7 +73,7 @@ else
 fi
 
 # Verify CLAUDE.md is under 200 lines
-CLAUDE_LINES=$(wc -l < "CLAUDE.md")
+CLAUDE_LINES=$(wc -l <"CLAUDE.md")
 if [[ "${CLAUDE_LINES}" -le 200 ]]; then
   pass "CLAUDE.md is ${CLAUDE_LINES} lines (≤ 200)"
 else

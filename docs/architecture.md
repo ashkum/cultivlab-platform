@@ -55,9 +55,8 @@ Update this document every sprint as new components are added.
     └────────────────┘  └──────────┘  └───────────────┘
 ```
 
-Open WebUI, Founder Console, and Firebase Hosting are not yet deployed — those land in
-Sprints 3, 5.5, and 4 respectively. The target architecture diagram below shows the
-end state.
+Open WebUI, Founder Console, and Firebase Hosting are not yet deployed — those land in Sprints 3,
+5.5, and 4 respectively. The target architecture diagram below shows the end state.
 
 ---
 
@@ -122,19 +121,19 @@ end state.
 
 ## Component inventory
 
-| Component | Purpose | Deployed in Sprint | Status |
-|---|---|---|---|
-| GCP VM (e2-small) | Hosts core Docker Compose stack | Sprint 1 | **Built** |
-| Caddy | TLS termination, reverse proxy | Sprint 1 | **Built** |
-| LiteLLM Proxy | Unified LLM gateway, virtual keys, budgets | Sprint 1 (deployed) / Sprint 2 (keys) | **Built** |
-| LiteLLM cohort team | Logical grouping in LiteLLM carrying `COHORT_MAX_BUDGET` / `COHORT_SOFT_BUDGET`; per-student virtual keys are members | Sprint 2 | **Built** (provisioned by `scripts/provision-cohort.sh`) |
-| Postgres | Shared database for all services | Sprint 1 | **Built** |
-| postgres-init | One-shot anchor; future hook for extensions | Sprint 1 | **Built** (no-op) |
-| Open WebUI | Student-facing chat interface | Sprint 3 | Not built |
-| Founder Console | Operator command center (FastAPI + HTMX) | Sprint 5.5 | Not built |
-| Firebase Hosting | Student static site hosting | Sprint 4 | Not built |
-| Langfuse | Observability, tracing, evals | Sprint 4 | Not built |
-| pgvector | Vector storage for RAG | Sprint 4 | Not built |
+| Component           | Purpose                                                                                                               | Deployed in Sprint                    | Status                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| GCP VM (e2-small)   | Hosts core Docker Compose stack                                                                                       | Sprint 1                              | **Built**                                                |
+| Caddy               | TLS termination, reverse proxy                                                                                        | Sprint 1                              | **Built**                                                |
+| LiteLLM Proxy       | Unified LLM gateway, virtual keys, budgets                                                                            | Sprint 1 (deployed) / Sprint 2 (keys) | **Built**                                                |
+| LiteLLM cohort team | Logical grouping in LiteLLM carrying `COHORT_MAX_BUDGET` / `COHORT_SOFT_BUDGET`; per-student virtual keys are members | Sprint 2                              | **Built** (provisioned by `scripts/provision-cohort.sh`) |
+| Postgres            | Shared database for all services                                                                                      | Sprint 1                              | **Built**                                                |
+| postgres-init       | One-shot anchor; future hook for extensions                                                                           | Sprint 1                              | **Built** (no-op)                                        |
+| Open WebUI          | Student-facing chat interface                                                                                         | Sprint 3                              | Not built                                                |
+| Founder Console     | Operator command center (FastAPI + HTMX)                                                                              | Sprint 5.5                            | Not built                                                |
+| Firebase Hosting    | Student static site hosting                                                                                           | Sprint 4                              | Not built                                                |
+| Langfuse            | Observability, tracing, evals                                                                                         | Sprint 4                              | Not built                                                |
+| pgvector            | Vector storage for RAG                                                                                                | Sprint 4                              | Not built                                                |
 
 ---
 
@@ -151,20 +150,20 @@ DNS registrar
                                    (one record per student)
 ```
 
-Caddy handles TLS for the VM subdomains (Let's Encrypt HTTP-01 challenge).
-Firebase handles TLS for student subdomains automatically.
+Caddy handles TLS for the VM subdomains (Let's Encrypt HTTP-01 challenge). Firebase handles TLS for
+student subdomains automatically.
 
 ---
 
 ## Access control model
 
-| Subdomain | Accessible by | Auth mechanism |
-|---|---|---|
-| `chat.${DOMAIN}` | Students (logged-in accounts only) | Open WebUI session |
-| `api.${DOMAIN}` | Students (via Continue.dev) | LiteLLM virtual key |
-| `admin.${DOMAIN}` | Operator only | IP allowlist (Caddy) + LiteLLM master key |
-| `founder.${DOMAIN}` | Operator only | IP allowlist (Caddy) + bcrypt password |
-| `<slug>.${DOMAIN}` | Public (read-only) | None — static public site |
+| Subdomain           | Accessible by                      | Auth mechanism                            |
+| ------------------- | ---------------------------------- | ----------------------------------------- |
+| `chat.${DOMAIN}`    | Students (logged-in accounts only) | Open WebUI session                        |
+| `api.${DOMAIN}`     | Students (via Continue.dev)        | LiteLLM virtual key                       |
+| `admin.${DOMAIN}`   | Operator only                      | IP allowlist (Caddy) + LiteLLM master key |
+| `founder.${DOMAIN}` | Operator only                      | IP allowlist (Caddy) + bcrypt password    |
+| `<slug>.${DOMAIN}`  | Public (read-only)                 | None — static public site                 |
 
 ---
 
@@ -213,18 +212,18 @@ Provider
 These are explicitly NOT in the current build scope. They are captured here so architectural
 thinking is not lost. Do not build any of these without a new PRD entry.
 
-| Component | What it would do | Triggers for revisiting |
-|---|---|---|
-| pgvector + RAG | Document-grounded Q&A per tenant | SMB demand emerges post-cohort |
-| Open WebUI Workspaces | Per-tenant isolation in chat UI | Multi-tenant demand emerges |
-| Postgres Row-Level Security | Hard DB-level tenant isolation | Multi-tenant demand emerges |
-| Cloud Run tool services | Per-tenant live data tools (CRM, calendar) | After RAG is validated |
-| Langfuse | Full observability and dataset-based evals | Sprint 4 / iteration 4 |
-| Promptfoo eval suites | Systematic model comparison | After Langfuse is running |
-| Vertex AI fine-tuning | Custom-tuned per-tenant models | After evals validate need |
-| Stripe billing | Automated tenant payments | At 10+ paying tenants |
-| AWS / Azure infra | Cloud portability | If non-GCP operators appear |
-| Status page | Public uptime visibility for parents | After first cohort |
+| Component                   | What it would do                           | Triggers for revisiting        |
+| --------------------------- | ------------------------------------------ | ------------------------------ |
+| pgvector + RAG              | Document-grounded Q&A per tenant           | SMB demand emerges post-cohort |
+| Open WebUI Workspaces       | Per-tenant isolation in chat UI            | Multi-tenant demand emerges    |
+| Postgres Row-Level Security | Hard DB-level tenant isolation             | Multi-tenant demand emerges    |
+| Cloud Run tool services     | Per-tenant live data tools (CRM, calendar) | After RAG is validated         |
+| Langfuse                    | Full observability and dataset-based evals | Sprint 4 / iteration 4         |
+| Promptfoo eval suites       | Systematic model comparison                | After Langfuse is running      |
+| Vertex AI fine-tuning       | Custom-tuned per-tenant models             | After evals validate need      |
+| Stripe billing              | Automated tenant payments                  | At 10+ paying tenants          |
+| AWS / Azure infra           | Cloud portability                          | If non-GCP operators appear    |
+| Status page                 | Public uptime visibility for parents       | After first cohort             |
 
 ---
 
@@ -233,6 +232,7 @@ thinking is not lost. Do not build any of these without a new PRD entry.
 All architecture decisions are recorded in `docs/DECISION_LOG.md`.
 
 Summary:
+
 - ADR-001: LiteLLM is the only LLM gateway
 - ADR-002: Single VM + Docker Compose (not Kubernetes)
 - ADR-003: Postgres is the only database

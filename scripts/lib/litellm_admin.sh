@@ -68,6 +68,7 @@ litellm_request() {
       log_info "would call ${method} ${url}"
     fi
     LITELLM_LAST_BODY=""
+    # shellcheck disable=SC2034 # exposed to callers that source this file
     LITELLM_LAST_STATUS="200"
     return 0
   fi
@@ -147,6 +148,7 @@ litellm_team_create() {
   if is_dry_run; then
     log_info "would create team alias=${team_alias} max_budget=${max_budget} soft_budget=${soft_budget}"
     LITELLM_LAST_BODY="$(printf '%s' "${body}" | jq -c '. + {team_id: "dry-run-team-id"}')"
+    # shellcheck disable=SC2034 # exposed to callers that source this file
     LITELLM_LAST_STATUS="200"
     return 0
   fi
@@ -166,6 +168,7 @@ litellm_team_update() {
   if is_dry_run; then
     log_info "would update team id=${team_id} max_budget=${max_budget} soft_budget=${soft_budget}"
     LITELLM_LAST_BODY="${body}"
+    # shellcheck disable=SC2034 # exposed to callers that source this file
     LITELLM_LAST_STATUS="200"
     return 0
   fi
@@ -213,6 +216,7 @@ litellm_key_create() {
       --argjson max "${max_budget}" \
       '{key: ("sk-dry-run-" + $alias), token: ("dry-run-token-" + $alias),
         key_alias: $alias, team_id: $team, max_budget: $max}')"
+    # shellcheck disable=SC2034 # exposed to callers that source this file
     LITELLM_LAST_STATUS="200"
     return 0
   fi
@@ -245,6 +249,7 @@ litellm_key_update() {
   if is_dry_run; then
     log_info "would update key token=${key_token} max=${max_budget} rpm=${rpm} tpm=${tpm}"
     LITELLM_LAST_BODY="${body}"
+    # shellcheck disable=SC2034 # exposed to callers that source this file
     LITELLM_LAST_STATUS="200"
     return 0
   fi
