@@ -80,6 +80,11 @@ students.csv
 *.log
 docker-compose.override.yml
 
+# ── Sprint 1 — rendered infra files ──────────────────────────────────────────
+# Caddyfile is generated from infra/Caddyfile.tmpl by scripts/bootstrap.sh
+infra/Caddyfile
+infra/.env
+
 # ── Terraform ─────────────────────────────────────────────────────────────────
 .terraform/
 .terraform.lock.hcl

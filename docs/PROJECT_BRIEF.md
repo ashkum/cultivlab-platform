@@ -1,7 +1,7 @@
 # CultivLab Platform — Project Brief
 
 **Living document. Update at the start of every sprint.**
-Last updated: Sprint 0 — v0.0.1
+Last updated: Sprint 1 — v0.1.0
 
 ---
 
@@ -18,15 +18,15 @@ their own instance.
 
 ## Live URLs
 
-Nothing is deployed yet (Sprint 0 — scaffold only).
+Sprint 1 deploys two of the five subdomains. The rest land in Sprints 3, 4, and 5.5.
 
 | Subdomain | Service | Status |
 |---|---|---|
-| `chat.${DOMAIN}` | Open WebUI | Not deployed |
-| `api.${DOMAIN}` | LiteLLM proxy | Not deployed |
-| `admin.${DOMAIN}` | LiteLLM admin UI | Not deployed |
-| `founder.${DOMAIN}` | Founder Console | Not deployed |
-| `<slug>.${DOMAIN}` | Student static sites | Not deployed |
+| `chat.${DOMAIN}` | Open WebUI | Not deployed (Sprint 3) |
+| `api.${DOMAIN}` | LiteLLM proxy | **Deployed** |
+| `admin.${DOMAIN}` | LiteLLM admin UI | **Deployed** (IP-locked) |
+| `founder.${DOMAIN}` | Founder Console | Not deployed (Sprint 5.5) |
+| `<slug>.${DOMAIN}` | Student static sites | Not deployed (Sprint 4) |
 
 ---
 
@@ -121,9 +121,12 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.0.1** — Sprint 0
+**v0.1.0** — Sprint 1
 
-Repository scaffold only. No infrastructure, no running services, no deployment.
+Foundation deployed: GCP VM with static IP, Docker Compose stack of Caddy + LiteLLM +
+Postgres + postgres-init, three providers wired (Anthropic, OpenAI, Vertex AI),
+five Slack alert channels routed, IP-locked admin UI. No virtual keys, no Open WebUI,
+no students yet — those land in Sprints 2 and 3.
 
 ---
 
@@ -132,6 +135,7 @@ Repository scaffold only. No infrastructure, no running services, no deployment.
 | Version | Sprint | Date | Summary |
 |---|---|---|---|
 | v0.0.1 | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline |
+| v0.1.0 | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200 |
 
 ---
 
@@ -141,16 +145,15 @@ None at Sprint 0. Issues are tracked in GitHub Issues.
 
 ---
 
-## Next up — Sprint 1
+## Next up — Sprint 2
 
-**Goal:** GCP foundation, VM provisioning, Caddy, Postgres, LiteLLM. Operator can
-curl `https://api.${DOMAIN}/health` and get 200.
+**Goal:** Per-student virtual keys, three-layer budget caps wired in LiteLLM, daily/weekly
+spend reports flowing to Slack. The platform shifts from "foundation up" to "ready to
+take real traffic with budget protection."
 
-Sprint 1 deliverables:
-- `scripts/gcp-bootstrap.sh` — creates VM, static IP, firewall rules, service account
-- `infra/docker-compose.yml` — Caddy + LiteLLM + Postgres
-- `infra/Caddyfile.tmpl` — env-var-driven reverse proxy config
-- `infra/litellm/config.yaml` — three providers: Anthropic, OpenAI, Vertex AI
-- `scripts/bootstrap.sh` — idempotent VM-side setup (installs Docker, runs Compose)
-- `docs/install.md` — filled in with real steps for GCP + DNS + bootstrap
-- `.github/workflows/ci-bootstrap.yml` — validates fresh-VM bootstrap in CI
+Sprint 2 deliverables (preview — formal task brief at sprint start):
+- `scripts/provision-cohort.sh` — generates virtual keys per student from `students.csv`
+- LiteLLM team budgets configured (`COHORT_MAX_BUDGET`)
+- Provider master-cap setup documented in `docs/install.md` §6
+- Slack alert smoke test (one fake budget breach per channel)
+- Sprint 2 sprint report

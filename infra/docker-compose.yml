@@ -1,0 +1,122 @@
+# infra/docker-compose.yml
+# CultivLab core stack — Sprint 1.
+#
+# All operator-specific values come from .env at the same level as this file
+# (or as exported shell vars). Image versions are pinned via env vars; never use :latest.
+#
+# LITELLM_VERSION carries a clean semver (e.g. 1.57.3) in .env / .env.example.
+# The "main-v" prefix below is part of LiteLLM's GHCR tag convention and is
+# hardcoded here so .env.example stays a clean semver.
+#
+# Run from /opt/cultivlab on the VM. CI brings up postgres + postgres-init + litellm
+# only and skips caddy (no real TLS in CI).
+
+name: cultivlab
+
+networks:
+  cultivlab-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - cultivlab-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # One-shot anchor: verifies postgres is reachable, then exits 0.
+  # Today this is a no-op. Sprint 4+ will add CREATE EXTENSION pgvector here.
+  # LiteLLM runs its own Prisma migrations on startup, so we don't duplicate that.
+  postgres-init:
+    image: postgres:${POSTGRES_VERSION}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    networks:
+      - cultivlab-net
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        psql -c 'SELECT 1;' >/dev/null
+        echo '{"level":"info","msg":"postgres-init ok","script":"postgres-init"}'
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-v${LITELLM_VERSION}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      VERTEX_AI_PROJECT: ${VERTEX_AI_PROJECT}
+      VERTEX_AI_LOCATION: ${VERTEX_AI_LOCATION}
+      SLACK_WEBHOOK_BUDGET: ${SLACK_WEBHOOK_BUDGET}
+      SLACK_WEBHOOK_REPORTS: ${SLACK_WEBHOOK_REPORTS}
+      SLACK_WEBHOOK_EXCEPTIONS: ${SLACK_WEBHOOK_EXCEPTIONS}
+      SLACK_WEBHOOK_SAFETY: ${SLACK_WEBHOOK_SAFETY}
+      SLACK_WEBHOOK_PLATFORM: ${SLACK_WEBHOOK_PLATFORM}
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    networks:
+      - cultivlab-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4000/health/liveliness"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  caddy:
+    image: caddy:${CADDY_VERSION}
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      FOUNDER_ADMIN_EMAIL: ${FOUNDER_ADMIN_EMAIL}
+      FOUNDER_ALLOWED_IP: ${FOUNDER_ALLOWED_IP}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - cultivlab-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s

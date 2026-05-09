@@ -1,0 +1,140 @@
+name: CI — bootstrap
+
+# Validates that the Docker Compose stack defined in infra/ comes up cleanly on a
+# fresh Ubuntu 24.04 runner. Caddy is intentionally excluded from this run because
+# real Let's Encrypt TLS cannot be provisioned in CI; only Caddy needs DNS + 80/443
+# reachable from the public internet.
+#
+# Sprint 1 scope: bring up postgres + postgres-init + litellm, poll LiteLLM
+# /health/liveliness, confirm all three containers are in their expected state.
+#
+# Sprint 2+ scope (to be added): end-to-end provider call against real ANTHROPIC_API_KEY
+# / OPENAI_API_KEY supplied via repository secrets.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "scripts/**"
+      - ".github/workflows/ci-bootstrap.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "scripts/**"
+      - ".github/workflows/ci-bootstrap.yml"
+
+jobs:
+  bootstrap:
+    name: Compose up + LiteLLM health
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Docker + Compose plugin (preinstalled on ubuntu-24.04)
+        run: |
+          docker --version
+          docker compose version
+
+      # ── Synthesize a minimal .env ─────────────────────────────────────────
+      # Sprint 1: stub values are sufficient because /health/liveliness does
+      # not exercise providers. Sprint 2+ will read real provider keys from
+      # GitHub Actions secrets (mark as required at that time):
+      #   secrets.ANTHROPIC_API_KEY, secrets.OPENAI_API_KEY, etc.
+      - name: Write CI .env
+        working-directory: infra
+        run: |
+          cat > .env <<'EOF'
+          DOMAIN=ci.example.com
+          FOUNDER_ADMIN_EMAIL=ci@example.com
+          FOUNDER_ALLOWED_IP=127.0.0.1/32
+          CADDY_VERSION=2.8.4-alpine
+          LITELLM_VERSION=1.57.3
+          POSTGRES_VERSION=16-alpine
+          POSTGRES_DB=cultivlab
+          POSTGRES_USER=cultivlab
+          POSTGRES_PASSWORD=ci-stub-password
+          DATABASE_URL=postgresql://cultivlab:ci-stub-password@postgres:5432/cultivlab
+          LITELLM_MASTER_KEY=sk-ci-stub-master-key
+          LITELLM_SALT_KEY=ci-stub-salt-key
+          ANTHROPIC_API_KEY=sk-ant-ci-stub
+          OPENAI_API_KEY=sk-ci-stub
+          VERTEX_AI_PROJECT=ci-stub-project
+          VERTEX_AI_LOCATION=us-central1
+          SLACK_WEBHOOK_BUDGET=https://hooks.slack.com/services/ci/budget
+          SLACK_WEBHOOK_REPORTS=https://hooks.slack.com/services/ci/reports
+          SLACK_WEBHOOK_EXCEPTIONS=https://hooks.slack.com/services/ci/exceptions
+          SLACK_WEBHOOK_SAFETY=https://hooks.slack.com/services/ci/safety
+          SLACK_WEBHOOK_PLATFORM=https://hooks.slack.com/services/ci/platform
+          EOF
+
+      - name: docker compose config (validate parse + var refs)
+        working-directory: infra
+        run: docker compose config --quiet
+
+      - name: docker compose pull (only the services we run)
+        working-directory: infra
+        run: docker compose pull postgres litellm
+
+      - name: docker compose up -d (postgres + postgres-init + litellm)
+        working-directory: infra
+        run: docker compose up -d postgres postgres-init litellm
+
+      - name: Wait for LiteLLM /health/liveliness (max 90s)
+        working-directory: infra
+        run: |
+          set -e
+          for i in $(seq 1 30); do
+            if docker compose exec -T litellm curl -fsS http://localhost:4000/health/liveliness >/dev/null 2>&1; then
+              echo "litellm healthy after $i attempts"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::litellm did not become healthy within 90s"
+          exit 1
+
+      - name: Assert container states
+        working-directory: infra
+        run: |
+          set -e
+          # postgres healthy
+          PG_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q postgres)")
+          echo "postgres health: $PG_HEALTH"
+          [ "$PG_HEALTH" = "healthy" ]
+
+          # litellm healthy
+          LL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q litellm)")
+          echo "litellm health: $LL_HEALTH"
+          [ "$LL_HEALTH" = "healthy" ]
+
+          # postgres-init exited successfully (Status="exited", ExitCode=0)
+          PI_ID=$(docker compose ps -aq postgres-init)
+          PI_STATUS=$(docker inspect --format='{{.State.Status}}' "$PI_ID")
+          PI_EXIT=$(docker inspect --format='{{.State.ExitCode}}' "$PI_ID")
+          echo "postgres-init: status=$PI_STATUS exit=$PI_EXIT"
+          [ "$PI_STATUS" = "exited" ]
+          [ "$PI_EXIT" = "0" ]
+
+          echo "compose ps:"
+          docker compose ps -a
+
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: infra
+        run: |
+          echo "=== litellm logs ==="
+          docker compose logs --no-color litellm || true
+          echo "=== postgres logs ==="
+          docker compose logs --no-color postgres || true
+          echo "=== postgres-init logs ==="
+          docker compose logs --no-color postgres-init || true
+
+      - name: Tear down
+        if: always()
+        working-directory: infra
+        run: docker compose down -v

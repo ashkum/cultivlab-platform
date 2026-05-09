@@ -1,0 +1,52 @@
+# infra/litellm/config.yaml
+# LiteLLM proxy configuration.
+#
+# All secrets and provider config come from env vars on the litellm container.
+# This file is safe to commit — it contains no values, only references.
+#
+# Tag binding: this file is loaded by ghcr.io/berriai/litellm:main-v${LITELLM_VERSION}.
+
+model_list:
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: vertex_ai/gemini-2.5-flash
+      vertex_project: os.environ/VERTEX_AI_PROJECT
+      vertex_location: os.environ/VERTEX_AI_LOCATION
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_model_in_db: false
+  enforce_user_param: true
+  alerting: ["slack"]
+  spend_report_frequency: "1d"
+  alert_types:
+    - budget_alerts
+    - spend_reports
+    - daily_reports
+    - llm_exceptions
+    - llm_too_slow
+    - db_exceptions
+    - outage_alerts
+  alert_to_webhook_url:
+    budget_alerts: os.environ/SLACK_WEBHOOK_BUDGET
+    spend_reports: os.environ/SLACK_WEBHOOK_REPORTS
+    daily_reports: os.environ/SLACK_WEBHOOK_REPORTS
+    llm_exceptions: os.environ/SLACK_WEBHOOK_EXCEPTIONS
+    llm_too_slow: os.environ/SLACK_WEBHOOK_EXCEPTIONS
+    db_exceptions: os.environ/SLACK_WEBHOOK_PLATFORM
+    outage_alerts: os.environ/SLACK_WEBHOOK_PLATFORM
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false

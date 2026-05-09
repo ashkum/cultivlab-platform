@@ -1,20 +1,63 @@
 # CultivLab — Architecture
 
-**Current state: Sprint 0 — nothing built yet.**
+**Current state: Sprint 1 — foundation deployed (Caddy, LiteLLM, Postgres on a single GCP VM).**
 Update this document every sprint as new components are added.
 
 ---
 
-## Current state diagram (Sprint 0)
+## Current state diagram (Sprint 1)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SPRINT 0 — SCAFFOLD ONLY                    │
-│                                                                  │
-│   Nothing is deployed. This document describes the target        │
-│   architecture that will be built sprint by sprint.              │
-└─────────────────────────────────────────────────────────────────┘
+                        Internet
+                           │
+              ┌────────────┴────────────┐
+              │  api.${DOMAIN}          │
+              │  admin.${DOMAIN}        │
+              └────────────┬────────────┘
+                           │
+    ┌─────────────────────▼──────────────────────────┐
+    │           GCP VM (e2-small, Ubuntu 24.04)       │
+    │           Static external IP                    │
+    │                                                 │
+    │  ┌─────────────────────────────────────────┐   │
+    │  │         Caddy (reverse proxy / TLS)     │   │
+    │  │   api.*  admin.*                        │   │
+    │  │   admin.* IP-locked via FOUNDER_ALLOWED_IP │ │
+    │  └──────────────┬──────────────────────────┘   │
+    │                 │                              │
+    │  ┌──────────────▼──────────────────────────┐   │
+    │  │  cultivlab-net (internal bridge)         │   │
+    │  │                                          │   │
+    │  │  ┌──────────────────────────────────┐   │   │
+    │  │  │       LiteLLM Proxy :4000        │   │   │
+    │  │  │  three providers wired in:       │   │   │
+    │  │  │  Anthropic, OpenAI, Vertex AI    │   │   │
+    │  │  │  Slack alerts → 5 channels       │   │   │
+    │  │  └──────────────┬──────────────────┘   │   │
+    │  │                 │                       │   │
+    │  │  ┌──────────────▼─────────────────┐   │   │
+    │  │  │    Postgres :5432              │   │   │
+    │  │  │  LiteLLM_SpendLogs (auto-migrated)│ │   │
+    │  │  └────────────────────────────────┘   │   │
+    │  │  ┌──────────────────────────────────┐ │   │
+    │  │  │  postgres-init (one-shot anchor) │ │   │
+    │  │  └──────────────────────────────────┘ │   │
+    │  └──────────────────────────────────────┘    │
+    └─────────────────────────────────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              │    LLM Providers        │
+              │  (via LiteLLM only)     │
+              │                         │
+    ┌─────────▼──────┐  ┌──────▼───┐  ┌▼──────────────┐
+    │  Anthropic API │  │OpenAI API│  │ Vertex AI     │
+    │  (Claude)      │  │  (GPT)   │  │ (Gemini)      │
+    └────────────────┘  └──────────┘  └───────────────┘
 ```
+
+Open WebUI, Founder Console, and Firebase Hosting are not yet deployed — those land in
+Sprints 3, 5.5, and 4 respectively. The target architecture diagram below shows the
+end state.
 
 ---
 
@@ -81,10 +124,11 @@ Update this document every sprint as new components are added.
 
 | Component | Purpose | Deployed in Sprint | Status |
 |---|---|---|---|
-| GCP VM (e2-small) | Hosts core Docker Compose stack | Sprint 1 | Not built |
-| Caddy | TLS termination, reverse proxy | Sprint 1 | Not built |
-| LiteLLM Proxy | Unified LLM gateway, virtual keys, budgets | Sprint 2 | Not built |
-| Postgres | Shared database for all services | Sprint 1 | Not built |
+| GCP VM (e2-small) | Hosts core Docker Compose stack | Sprint 1 | **Built** |
+| Caddy | TLS termination, reverse proxy | Sprint 1 | **Built** |
+| LiteLLM Proxy | Unified LLM gateway, virtual keys, budgets | Sprint 1 (deployed) / Sprint 2 (keys) | **Built** (no virtual keys yet) |
+| Postgres | Shared database for all services | Sprint 1 | **Built** |
+| postgres-init | One-shot anchor; future hook for extensions | Sprint 1 | **Built** (no-op) |
 | Open WebUI | Student-facing chat interface | Sprint 3 | Not built |
 | Founder Console | Operator command center (FastAPI + HTMX) | Sprint 5.5 | Not built |
 | Firebase Hosting | Student static site hosting | Sprint 4 | Not built |

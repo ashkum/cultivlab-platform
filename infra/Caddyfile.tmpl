@@ -1,0 +1,36 @@
+# infra/Caddyfile.tmpl
+# Rendered to infra/Caddyfile by scripts/bootstrap.sh via envsubst.
+# DO NOT edit the rendered file (it is gitignored); edit this template.
+#
+# Two routes:
+#   api.${DOMAIN}    — public LiteLLM API. Auto-HTTPS, HTTP→HTTPS redirect.
+#   admin.${DOMAIN}  — LiteLLM admin UI. Auto-HTTPS. IP-locked. 403 from any
+#                       address not in ${FOUNDER_ALLOWED_IP}.
+#
+# Caddy v2 supports multiple CIDRs in `remote_ip` separated by spaces.
+# bootstrap.sh normalizes commas in ${FOUNDER_ALLOWED_IP} to spaces before
+# rendering, so both single and comma-separated env values work.
+
+{
+	email ${FOUNDER_ADMIN_EMAIL}
+}
+
+api.${DOMAIN} {
+	encode zstd gzip
+	reverse_proxy litellm:4000
+}
+
+admin.${DOMAIN} {
+	encode zstd gzip
+
+	@allowed remote_ip ${FOUNDER_ALLOWED_IP}
+	handle @allowed {
+		# Convenience: redirect bare-domain visitors to /ui.
+		@root path /
+		rewrite @root /ui
+		reverse_proxy litellm:4000
+	}
+	handle {
+		respond "Forbidden" 403
+	}
+}
