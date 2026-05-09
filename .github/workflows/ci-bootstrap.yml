@@ -61,6 +61,8 @@ jobs:
           DATABASE_URL=postgresql://cultivlab:ci-stub-password@postgres:5432/cultivlab
           LITELLM_MASTER_KEY=sk-ci-stub-master-key
           LITELLM_SALT_KEY=ci-stub-salt-key
+          UI_USERNAME=admin
+          UI_PASSWORD=ci-stub-ui-password
           ANTHROPIC_API_KEY=sk-ant-ci-stub
           OPENAI_API_KEY=sk-ci-stub
           VERTEX_AI_PROJECT=ci-stub-project
@@ -107,9 +109,13 @@ jobs:
           echo "postgres health: $PG_HEALTH"
           [ "$PG_HEALTH" = "healthy" ]
 
-          # litellm healthy
-          LL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q litellm)")
-          echo "litellm health: $LL_HEALTH"
+          # litellm healthy (poll up to 60s for healthcheck to converge)
+          for i in $(seq 1 30); do
+            LL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q litellm)")
+            echo "litellm health (attempt $i/30): $LL_HEALTH"
+            [ "$LL_HEALTH" = "healthy" ] && break
+            sleep 2
+          done
           [ "$LL_HEALTH" = "healthy" ]
 
           # postgres-init exited successfully (Status="exited", ExitCode=0)

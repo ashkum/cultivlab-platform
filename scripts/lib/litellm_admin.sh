@@ -178,7 +178,7 @@ litellm_team_update() {
 # litellm_key_get <team_id> <key_alias> — sets LITELLM_LAST_BODY to key JSON or returns 1.
 litellm_key_get() {
   local team_id="$1" key_alias="$2"
-  litellm_request GET "/key/list?team_id=${team_id}&size=200&return_full_object=true" || return 1
+  litellm_request GET "/key/list?team_id=${team_id}&size=100&return_full_object=true" || return 1
   _litellm_filter_one key_alias "${key_alias}"
 }
 

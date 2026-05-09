@@ -207,7 +207,7 @@ wait_for_litellm_health() {
   for ((i = 1; i <= attempts; i++)); do
     if docker compose --env-file "${ENV_TARGET}" \
       -f "${WORK_DIR}/docker-compose.yml" \
-      exec -T litellm curl -fsS http://localhost:4000/health/liveliness \
+      exec -T litellm python -c "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')" \
       >/dev/null 2>&1; then
       log_info "litellm healthy (attempt ${i}/${attempts})"
       return 0
