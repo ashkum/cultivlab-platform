@@ -17,7 +17,6 @@ asking for human review.
    ```
 
 2. **Lint checks**
-
    - Run `pre-commit run --all-files` and report any failures.
    - For `.sh` files: confirm `shellcheck` passes with no warnings.
    - For `.md` files: confirm `prettier --check` passes.
@@ -31,7 +30,6 @@ asking for human review.
    Report clean or list any findings.
 
 4. **Engineering standards check** — for each changed file, verify:
-
    - [ ] No hardcoded values (operator domain, real keys, real names)
    - [ ] No magic strings or numbers — named constants used
    - [ ] Error handling is explicit — no silent failures
@@ -40,22 +38,18 @@ asking for human review.
    - [ ] If a script: idempotent (running twice produces same result)
 
 5. **`.env.example` sync check**
-
    - List any env vars referenced in changed files.
    - Confirm each one is documented in `.env.example` with a comment.
    - Flag any missing entries as a blocking issue.
 
 6. **`docs/install.md` sync check**
-
    - If the diff adds a new tool, service, or setup step, confirm `docs/install.md` is updated.
 
 7. **`docs/architecture.md` sync check**
-
    - If the diff adds a new component or changes a routing decision, confirm `docs/architecture.md`
      reflects the change.
 
 8. **CHANGELOG.md check**
-
    - Confirm the `[Unreleased]` section has an entry for the change.
 
 9. **Breaking change scan**
