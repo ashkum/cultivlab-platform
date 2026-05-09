@@ -72,11 +72,11 @@ jobs:
       # This is a best-effort heuristic: catches obvious drift.
       - name: Check .env.example sync
         run: |
-          # Extract var names referenced in shell/yaml/config files (${VAR_NAME} style)
+          # Extract var names referenced from external configuration (compose + Caddy template).
+          # Shell scripts use many internal ${VAR} patterns that are NOT env vars; we don't scan them.
           REFERENCED=$(grep -rhoE '\$\{[A-Z][A-Z0-9_]+\}' \
-            --include='*.sh' --include='*.yml' --include='*.yaml' \
-            --exclude-dir='.git' --exclude-dir='node_modules' \
-            . \
+            infra/docker-compose.yml infra/Caddyfile.tmpl \
+            2>/dev/null \
             | grep -oE '[A-Z][A-Z0-9_]+' | sort -u)
 
           # Extract var names defined in .env.example
