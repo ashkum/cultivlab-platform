@@ -89,7 +89,7 @@ services:
     networks:
       - cultivlab-net
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:4000/health/liveliness"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:4000/health/liveliness\")' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
