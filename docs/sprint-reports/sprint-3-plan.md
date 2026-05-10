@@ -98,6 +98,53 @@ This verification is **Deliverable 1** of Sprint 3.
 - Sprint 6: pre-cohort hardening
 - Anything not in deliverables 1-7 above
 
+## Deliverable 1 — completed 2026-05-10
+
+### Findings
+
+1. Open WebUI v0.5.20 does NOT pass the `user` field to upstream LLM proxy on chat completions.
+2. LiteLLM Customer Usage confirmed: 5 chat calls from Open WebUI registered with no user
+   attribution.
+3. Open WebUI v0.5.20 has a **Functions** subsystem (Filter Functions) that can inject fields into
+   request bodies before they leave Open WebUI.
+4. Open WebUI admin UI supports adding multiple OpenAI-compatible connections with distinct API
+   keys, and a "Direct Connections" feature for per-user keys.
+
+### Design decision
+
+**Adopt: Filter Function for user-field injection (Open WebUI Functions subsystem).**
+
+All students share ONE Open WebUI → LiteLLM connection (using the master key). A custom Open WebUI
+Filter Function injects `user: <openwebui_user_id>` into every chat completion request body. LiteLLM
+then attributes spend per-student via the existing `user` field path (already proven in Sprint 2).
+
+### Why this approach over alternatives
+
+- **Vs. per-user "Direct Connections" (each student configures their own LiteLLM key):** Too much
+  configuration burden for 8-year-olds. High setup failure rate.
+- **Vs. one admin-configured connection per student:** Doesn't isolate students from each other's
+  keys in the model dropdown. Privacy leak.
+- **Vs. middleware reverse proxy:** Adds infrastructure complexity. Filter Function achieves the
+  same outcome with less moving parts.
+
+### Implications for downstream deliverables
+
+- **Deliverable 3 (provision-students.sh):** changes from "link account to LiteLLM virtual key" to
+  "create Open WebUI account; rely on Filter Function for attribution"
+- **Sprint 2 virtual keys retained:** used for API/Continue.dev access (NOT for chat). Documented in
+  install.md §6.
+- **No changes needed to LiteLLM config:** `user` field path is already wired in Sprint 2
+  (`enforce_user_param: true`).
+
+### Open questions for Deliverable 3
+
+1. Does Open WebUI admin API support programmatic user creation? (Need to verify; affects provision
+   script automation.)
+2. Where exactly does the Filter Function get installed — admin Functions tab, or per-model?
+   (Determines configuration UX.)
+
+---
+
 ## Estimated effort
 
 2-3 focused sessions of 90-120 min each. Total ~6 hours of focused work.

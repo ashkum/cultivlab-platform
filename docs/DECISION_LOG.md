@@ -550,3 +550,48 @@ Negative:
 - Slack free tier has message history limits. Not a concern for operational alerts.
 - If Slack is down, alerts are lost. Mitigated by: UptimeRobot external uptime monitoring
   (independent of Slack) and operator's daily console check habit.
+
+## ADR-011 — Open WebUI Filter Function for user-field injection (2026-05-10)
+
+**Status:** Accepted
+
+**Context:** Sprint 2 established per-student LiteLLM virtual keys and per-user spend attribution
+via the user field on chat completion requests. Sprint 3 plans to deploy Open WebUI as the
+student-facing chat surface. Verification during Sprint 3 Deliverable 1 confirmed that Open WebUI
+v0.5.20 does not natively pass the user field to upstream LLM proxies. This breaks per-student
+attribution and budget enforcement.
+
+**Decision:** Use an Open WebUI Filter Function (Python plugin) to inject the user field into every
+chat completion request body before it leaves Open WebUI. This restores the user-field attribution
+path proven in Sprint 2.
+
+All students share ONE Open WebUI to LiteLLM connection authenticated with the LiteLLM master key.
+The Filter Function provides per-student identity. LiteLLM Customer Usage attributes spend
+correctly.
+
+**Alternatives considered:**
+
+1. Per-user Direct Connections (each student manually configures their LiteLLM virtual key in their
+   own settings). Rejected: too much configuration burden for 8-12-year-olds; high setup failure
+   rate.
+2. One Open WebUI connection per student (admin-managed): admin pre-creates 12 OpenAI-compatible
+   connections, each with a different LiteLLM key. Rejected: doesn't isolate students. Every user
+   sees all admin connections in the model dropdown. Privacy leak; students could pick another
+   student key.
+3. Reverse-proxy middleware between Open WebUI and LiteLLM. Rejected: adds infrastructure complexity
+   without proportional benefit over the Filter Function approach.
+
+**Consequences:**
+
+- Sprint 3 Deliverable 3 (provision-students.sh) creates Open WebUI accounts only; does NOT assign
+  per-student LiteLLM virtual keys in Open WebUI settings.
+- Sprint 2 virtual keys retained for API/Continue.dev access (chat goes through Filter Function
+  path).
+- Filter Function must be tested at Sprint 3 Deliverable 4 boundary.
+- LiteLLM enforce_user_param=true provides defense-in-depth: requests without user are rejected.
+
+**References:**
+
+- Sprint 3 plan: docs/sprint-reports/sprint-3-plan.md (Deliverable 1 findings section)
+- Sprint 2: scripts/provision-cohort.sh
+- LiteLLM config: infra/litellm/config.yaml
