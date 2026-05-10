@@ -21,6 +21,7 @@ volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+  openwebui-data:
 
 services:
   postgres:
@@ -123,3 +124,27 @@ services:
       timeout: 5s
       retries: 6
       start_period: 15s
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPENWEBUI_VERSION}
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_healthy
+    environment:
+      WEBUI_AUTH: "true"
+      ENABLE_SIGNUP: ${OPENWEBUI_ENABLE_SIGNUP}
+      DEFAULT_USER_ROLE: ${OPENWEBUI_DEFAULT_USER_ROLE}
+      WEBUI_SECRET_KEY: ${OPENWEBUI_SECRET_KEY}
+      OPENAI_API_BASE_URLS: http://litellm:4000
+      OPENAI_API_KEYS: ${LITELLM_MASTER_KEY}
+    volumes:
+      - openwebui-data:/app/backend/data
+    networks:
+      - cultivlab-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s

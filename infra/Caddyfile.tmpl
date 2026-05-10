@@ -2,10 +2,11 @@
 # Rendered to infra/Caddyfile by scripts/bootstrap.sh via envsubst.
 # DO NOT edit the rendered file (it is gitignored); edit this template.
 #
-# Two routes:
+# Three routes:
 #   api.${DOMAIN}    — public LiteLLM API. Auto-HTTPS, HTTP→HTTPS redirect.
 #   admin.${DOMAIN}  — LiteLLM admin UI. Auto-HTTPS. IP-locked. 403 from any
 #                       address not in ${FOUNDER_ALLOWED_IP}.
+#   chat.${DOMAIN}   — Open WebUI student chat surface. Auto-HTTPS, public.
 #
 # Caddy v2 supports multiple CIDRs in `remote_ip` separated by spaces.
 # bootstrap.sh normalizes commas in ${FOUNDER_ALLOWED_IP} to spaces before
@@ -33,4 +34,9 @@ admin.${DOMAIN} {
 	handle {
 		respond "Forbidden" 403
 	}
+}
+
+chat.${DOMAIN} {
+	encode zstd gzip
+	reverse_proxy open-webui:8080
 }
