@@ -182,3 +182,75 @@ bug.
 
 **When to fix:** Sprint 6 pre-cohort hardening. Build a reset script so we never depend on the
 broken UI.
+
+## Caddy v2 regex limitation note for docs
+
+**Priority:** low (already implemented correctly) **Source:** Sprint 4 Deliverable 2
+
+**Context:** Caddy v2 does not support regex in site addresses. Bracket syntax like
+`l[0-9][0-9].${DOMAIN}` is treated as a literal hostname, not a regex pattern. Discovered when Caddy
+refused to start with error "subject does not qualify for certificate: 'l[0-9][0-9].cultivlab.com'".
+
+**Workaround used:** Explicit comma-separated hostname list (`l01.${DOMAIN}, l02.${DOMAIN}, ...`)
+with `{labels.2}` placeholder to extract the slot identifier at request time.
+
+**When to add to docs:** Sprint 6 install.md pass. Note in the Caddy section that adding new slots
+requires editing Caddyfile.tmpl + DNS, not just creating a directory.
+
+## docker compose up -d does not recreate running containers
+
+**Priority:** medium (operational gotcha) **Source:** Sprint 4 Deliverable 2
+
+**Context:** After updating Caddyfile.tmpl on the VM and running `bootstrap.sh`, the new config was
+rendered but Caddy kept running with the old config because the container itself wasn't recreated.
+The "Container cultivlab-caddy-1 Running" message in `docker compose up -d` output is misleading —
+the container is running but with old config.
+
+**Workaround:** Explicit `docker compose restart caddy` after Caddyfile changes.
+
+**Fix:** Update `bootstrap.sh` to detect Caddyfile changes and force-restart caddy when the rendered
+Caddyfile differs from the running container's view. OR: always restart caddy on bootstrap.sh runs
+(simpler, slight downtime cost).
+
+**When to fix:** Sprint 6 — before real cohort, when operator workflow becomes load-bearing.
+
+## bash subshell stdin consumption pitfall
+
+**Priority:** documentation-only (already fixed in provision-sites.sh) **Source:** Sprint 4
+Deliverable 4
+
+**Context:** `gcloud compute ssh` (and `gcloud compute scp`, ssh, curl, many tools) read from stdin
+by default. In a `while ... < <(tail ...)` loop, the loop's stdin IS the source data. Without
+`</dev/null` redirect on each ssh/scp call, ssh consumes the rest of the loop's input and the loop
+exits after one iteration. Classic bash pitfall.
+
+**When to document:** Add to CLAUDE.md or scripts/README.md when written. Future scripts that wrap
+gcloud commands in loops must remember this.
+
+## Onboarding card delivery automation
+
+**Priority:** medium (do before real cohort) **Source:** Sprint 4 Deliverable 6
+
+**Context:** `scripts/generate-cards.sh` writes markdown cards locally with mode 600. Operator
+currently has to manually distribute (print, email, etc.). For a 12-student cohort this is
+acceptable; for scale or multiple cohorts it becomes friction.
+
+**Fix idea:** Add `--email` flag that uses a configured SMTP server to send each card to the
+student's email (or parent's email). Or generate PDFs for printing. Or upload to a per-cohort secure
+download portal.
+
+**When to fix:** Sprint 6 pre-cohort hardening, depending on operator workflow preference.
+
+## Continue.dev integration smoke test
+
+**Priority:** medium (do before real cohort) **Source:** Sprint 4 Deliverable 5
+
+**Context:** The Continue.dev config template renders correctly with envsubst. But we haven't
+verified that a real student following the onboarding card instructions can actually get
+Continue.dev working in VS Code and successfully chat through LiteLLM.
+
+**Fix:** Sprint 6 — operator follows the onboarding card instructions on a clean Mac/Windows:
+install VS Code, install Continue.dev extension, paste the config, ask Claude a question, verify
+response comes through. Document any setup gotchas.
+
+**When to fix:** Sprint 6 end-to-end run-through.

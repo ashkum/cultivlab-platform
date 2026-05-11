@@ -237,7 +237,8 @@ Summary:
 - ADR-002: Single VM + Docker Compose (not Kubernetes)
 - ADR-003: Postgres is the only database
 - ADR-004: Caddy for HTTPS
-- ADR-005: Firebase Hosting for student sites
+- ADR-005: Firebase Hosting for student sites (SUPERSEDED by ADR-013 — Caddy + VM filesystem with
+  slot-based subdomains)
 - ADR-006: Open WebUI for chat UI
 - ADR-007: Continue.dev as in-IDE student AI
 - ADR-008: Custom Founder Console for cohort operations

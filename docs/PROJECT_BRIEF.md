@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 3 — v0.3.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 4 — v0.4.0
 
 ---
 

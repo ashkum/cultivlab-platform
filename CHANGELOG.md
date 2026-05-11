@@ -9,6 +9,56 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.4.0] — 2026-05-11 — Sprint 4 wrap
+
+### Added
+
+- Slot-based student site subdomains `l01.${DOMAIN}` through `l06.${DOMAIN}` with auto-HTTPS via
+  Lets Encrypt (ADR-013)
+- `scripts/provision-sites.sh` — assigns cohort students to slots, customizes index.html per
+  student, deploys to VM via gcloud scp + ssh
+- `scripts/generate-cards.sh` — joins cohort-students + cohort-slots CSVs on slug, renders
+  per-student onboarding markdown cards with embedded Continue.dev YAML config
+- `templates/student-starter/` — single-page HTML starter template + kid-friendly README
+- `templates/continue-config/config.yaml.tmpl` — Continue.dev VS Code config template with 3 models
+  (Claude Sonnet, GPT-4o Mini, Gemini Flash) all routed through LiteLLM
+- ADR-013 (Caddy + VM filesystem for student site slots, supersedes ADR-005)
+- CI workflow: 2 new dry-run steps for provision-sites.sh and generate-cards.sh
+- `docs/sprint-reports/sprint-4.md` — Sprint 4 completion report (173 lines)
+- 6 Lets Encrypt certificates auto-acquired for slot subdomains
+- 6 DNS A records at GoDaddy for l01-l06.cultivlab.com
+
+### Changed
+
+- `infra/Caddyfile.tmpl` — added slot block serving l01-l06.${DOMAIN}, updated header comment to
+  "Four route patterns"
+- `infra/docker-compose.yml` — added /srv/students:/srv/students:ro volume mount to caddy service
+- `docs/architecture.md` — marked ADR-005 as SUPERSEDED by ADR-013
+- `docs/PROJECT_BRIEF.md` — version updated to Sprint 4 / v0.4.0
+- `.gitignore` — added patterns for cohort-students*.csv, cohort-slots*.csv, onboarding-cards-\*/
+
+### Verified
+
+- l01.cultivlab.com through l06.cultivlab.com all serve via HTTPS with valid Lets Encrypt certs
+- Student-starter template deployed to l01, renders correctly, button JS works
+- 3-student test cohort fully provisioned end-to-end: cohort-students + cohort-slots CSVs +
+  onboarding cards with embedded config
+- CI all green on commit `1c99f55` (Lint, Secret Scan, CI — bootstrap)
+- provision-sites.sh deploys ALL students after bash stdin-consumption bug fix
+- generate-cards.sh CSV join works on both Mac bash 3.2 and Ubuntu CI bash 5
+
+### Lessons captured
+
+- Caddy v2 does not support regex in site addresses; use explicit comma-separated hostnames +
+  `{labels.N}` placeholder
+- `docker compose up -d` does NOT restart already-running containers; explicit `restart` needed to
+  pick up Caddyfile changes
+- `gcloud compute ssh` consumes loop stdin without `</dev/null` redirect (classic bash subshell
+  pitfall)
+- macOS default bash 3.2 lacks associative arrays; use awk for portable CSV joins
+- Firebase Hosting does not support wildcard subdomains; per-domain manual setup with 24h cert wait
+  (confirmed 2026-05-11)
+
 ## [v0.3.0] — 2026-05-10 — Sprint 3 wrap
 
 ### Added
