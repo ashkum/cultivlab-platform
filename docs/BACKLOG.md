@@ -105,3 +105,39 @@ natively, while daily/weekly windows will be enforced by Sprint 5 cron jobs read
 **When to fix:** During Sprint 3 documentation deliverable (folded into sprint-3.md).
 
 ---
+
+## Open WebUI branding for chat.cultivlab.com
+
+**Priority:** medium (do before real cohort) **Source:** May 10, 2026 Sprint 3 Deliverable 4
+
+**Context:** The chat.cultivlab.com login/welcome page shows default Open WebUI branding (logo,
+name, colors). Before students see the platform, customize to CultivLab branding.
+
+**Tasks:**
+
+- Customize platform name from "Open WebUI" to "CultivLab" (Admin Panel → Settings → Branding or
+  similar)
+- Upload CultivLab logo (need to create one)
+- Custom welcome/signup text
+- Custom favicon
+- Possibly: custom theme colors
+
+**When to fix:** Sprint 6 (pre-cohort hardening) or before first real cohort onboarding.
+
+## provision-students.sh — password preservation on re-run
+
+**Priority:** medium (must fix before real cohort) **Source:** May 10, 2026 Sprint 3 Deliverable 4
+
+**Context:** When provision-students.sh runs against existing users (the "kept" branch), it writes
+empty password to `cohort-students-${COHORT_NAME}.csv`, overwriting any previously-recorded
+plaintext password. Mimics the issue provision-cohort.sh solves via `_existing_key_for_slug` helper.
+
+**Symptom:** First run creates user with random password X, writes X to CSV. Second run detects
+existing user, writes empty to CSV (overwriting X). Now we don't know the user's password.
+
+**Fix:** Add `_existing_password_for_slug` helper that reads existing CSV before write. If row
+exists with non-empty password, preserve it. Pattern matches `_existing_key_for_slug` in
+scripts/provision-cohort.sh.
+
+**When to fix:** Before first real cohort. Until fixed, NEVER re-run provision-students.sh after
+passwords have been delivered to students.
