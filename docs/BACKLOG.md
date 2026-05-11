@@ -155,3 +155,30 @@ Open WebUI, creating admin account, installing Filter Function via admin panel, 
 running provision-cohort.sh + provision-students.sh, distributing onboarding cards.
 
 **When to fix:** Sprint 6 docs pass (pre-cohort hardening).
+
+## Open WebUI admin password reset doesn't work via UI
+
+**Priority:** medium (do before real cohort) **Source:** May 10, 2026 Sprint 3 Deliverable 4 smoke
+test
+
+**Context:** Open WebUI v0.5.20 admin user edit form at
+`https://chat.${DOMAIN}/admin/users/edit?id=<uuid>` does not accept password updates. Typing in the
+New Password field and saving silently does nothing. Cause not yet diagnosed. Likely candidates:
+form requires all fields re-touched, minimum password complexity not met silently, or a known v0.5.x
+bug.
+
+**Workarounds:**
+
+- Delete the user and re-run provision-students.sh (loses chat history)
+- Direct sqlite3 edit on the VM (last resort)
+- Build `scripts/reset-student-password.sh` that uses the admin API directly
+
+**Diagnostic steps when revisiting:**
+
+- Open browser DevTools Network tab before clicking Save
+- Look for PUT/POST request to /api/v1/users/<id>
+- Check response status (4xx = validation error in response body)
+- Check Console tab for JS errors
+
+**When to fix:** Sprint 6 pre-cohort hardening. Build a reset script so we never depend on the
+broken UI.
