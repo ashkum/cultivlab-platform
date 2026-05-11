@@ -72,6 +72,12 @@ jobs:
           SLACK_WEBHOOK_EXCEPTIONS=https://hooks.slack.com/services/ci/exceptions
           SLACK_WEBHOOK_SAFETY=https://hooks.slack.com/services/ci/safety
           SLACK_WEBHOOK_PLATFORM=https://hooks.slack.com/services/ci/platform
+          OPENWEBUI_VERSION=0.5.20
+          OPENWEBUI_SECRET_KEY=ci-stub-secret-key
+          OPENWEBUI_ENABLE_SIGNUP=true
+          OPENWEBUI_DEFAULT_USER_ROLE=user
+          SAFETY_LOG_ONLY=true
+          SAFETY_MODERATION_DISABLED=true
           EOF
 
       - name: docker compose config (validate parse + var refs)
@@ -156,6 +162,31 @@ jobs:
             exit 1
           fi
           echo "✓ provision-cohort.sh --dry-run passed (no CSV written)"
+
+      # ── Sprint 3 — provision-students dry-run ────────────────────────────
+      # Exercises validation + dry-run code paths (no network calls). Real
+      # Open WebUI account creation requires a live admin session, which
+      # CI does not have.
+      - name: provision-students.sh --dry-run (Sprint 3)
+        run: |
+          set -euo pipefail
+          KEYS_CSV="$(mktemp)"
+          cat > "$KEYS_CSV" <<'EOF'
+          slug,name,email,parent_email,key,key_alias
+          ci-alex,CI Alex,ci-alex@example.com,ci-parent-alex@example.com,sk-ci-stub-alex,ci-cohort-ci-alex
+          ci-bea,CI Bea,ci-bea@example.com,ci-parent-bea@example.com,sk-ci-stub-bea,ci-cohort-ci-bea
+          EOF
+          export DOMAIN=ci.example.com
+          export COHORT_NAME=ci-cohort
+          export OPENWEBUI_ADMIN_EMAIL=ci-admin@example.com
+          export OPENWEBUI_ADMIN_PASSWORD=ci-stub-password
+          export COHORT_KEYS_CSV_PATH="$KEYS_CSV"
+          ./scripts/provision-students.sh --dry-run
+          if [ -f "$(dirname "$KEYS_CSV")/cohort-students-ci-cohort.csv" ]; then
+            echo "::error::dry-run wrote cohort-students CSV — should be no-op"
+            exit 1
+          fi
+          echo "✓ provision-students.sh --dry-run passed (no CSV written)"
 
       - name: Dump logs on failure
         if: failure()
