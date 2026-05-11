@@ -141,3 +141,17 @@ scripts/provision-cohort.sh.
 
 **When to fix:** Before first real cohort. Until fixed, NEVER re-run provision-students.sh after
 passwords have been delivered to students.
+
+## install.md sections 7-8 still placeholders
+
+**Priority:** medium (do before real cohort) **Source:** Sprint 3 Deliverable 6
+
+**Context:** docs/install.md §7 (Open WebUI setup) and §8 (Cohort provisioning) say "Filled in
+Sprint 3" but were not actually filled in due to heredoc parsing issues during the Sprint 3 docs
+session. Content is documented in docs/sprint-reports/sprint-3.md instead.
+
+**Fix:** Rewrite sections 7-8 in install.md to cover: generating OPENWEBUI_SECRET_KEY, deploying
+Open WebUI, creating admin account, installing Filter Function via admin panel, disabling signup,
+running provision-cohort.sh + provision-students.sh, distributing onboarding cards.
+
+**When to fix:** Sprint 6 docs pass (pre-cohort hardening).

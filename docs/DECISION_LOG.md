@@ -595,3 +595,59 @@ correctly.
 - Sprint 3 plan: docs/sprint-reports/sprint-3-plan.md (Deliverable 1 findings section)
 - Sprint 2: scripts/provision-cohort.sh
 - LiteLLM config: infra/litellm/config.yaml
+
+## ADR-012 — LiteLLM CustomLogger callback for safety moderation (2026-05-10)
+
+**Status:** Accepted
+
+**Context:** CultivLab serves chat to children aged 8-12. Sprint 3 plan requires real-time content
+moderation of every chat completion request, with alerts firing to SLACK_WEBHOOK_SAFETY when harmful
+content is detected. The platform must block flagged content from reaching the upstream LLM, not
+just observe it.
+
+**Decision:** Implement safety moderation as a LiteLLM CustomLogger callback class with
+async_pre_call_hook. The hook runs before every chat completion, sends the latest user message to
+OpenAI omni-moderation-latest, blocks flagged requests with HTTP 400, and posts to
+SLACK_WEBHOOK_SAFETY with student UUID + flagged categories + content preview.
+
+The callback lives at infra/litellm/callbacks/safety_moderation.py, is mounted into the LiteLLM
+container at /app/callbacks/, and is referenced in litellm/config.yaml via callbacks:
+[callbacks.safety_moderation.proxy_handler_instance].
+
+**Alternatives considered:**
+
+1. Built-in LiteLLM openai_moderation callback. Rejected: blocks flagged requests but does not
+   customize alerting. Sprint 3 plan explicitly requires Slack alert wiring with student-UUID
+   attribution.
+2. Separate reverse-proxy middleware between Open WebUI and LiteLLM. Rejected: adds infrastructure
+   complexity (another container, another thing to monitor). Custom callback achieves the same
+   blocking + alerting with one Python file.
+3. async_moderation_hook instead of async_pre_call_hook. Rejected: moderation_hook only runs on the
+   explicit /moderations endpoint, not on chat completions. We need universal coverage.
+
+**Failure mode:** The callback fails OPEN, not closed. If OpenAI moderation API is unreachable
+(network error, 5xx), the callback returns None and the request proceeds. Failing closed would block
+legitimate traffic during OpenAI outages and ChatGPT is a single point of failure we cannot fix.
+
+**Tunability:** Two env vars control runtime behavior:
+
+- SAFETY_LOG_ONLY=true: alert but do not block. Useful during initial cohort onboarding when tuning
+  false-positive rates.
+- SAFETY_MODERATION_DISABLED=true: skip moderation entirely. Debug only.
+
+**Consequences:**
+
+- Every chat completion incurs one extra OpenAI API call (~50-150ms added latency).
+- One additional Slack channel (#cultivlab-alerts via SLACK_WEBHOOK_SAFETY) becomes load-bearing for
+  safety operations.
+- Sprint 6 (pre-cohort hardening) will involve a tuning period in SAFETY_LOG_ONLY mode to identify
+  and suppress false positives without student impact.
+- LiteLLM CustomLogger callbacks have a documented but evolving API. Pin LiteLLM version and read
+  the changelog before upgrading.
+
+**References:**
+
+- Sprint 3 plan: docs/sprint-reports/sprint-3-plan.md Deliverable 4
+- Source: infra/litellm/callbacks/safety_moderation.py
+- LiteLLM CustomLogger base class:
+  github.com/BerriAI/litellm/blob/main/litellm/integrations/custom_logger.py
