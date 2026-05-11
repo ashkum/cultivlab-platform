@@ -188,6 +188,59 @@ jobs:
           fi
           echo "✓ provision-students.sh --dry-run passed (no CSV written)"
 
+      # ── Sprint 4 — provision-sites dry-run ──────────────────────────────
+      # Exercises validation + dry-run code paths. Real deploy requires
+      # gcloud auth + VM access, which CI does not have.
+      - name: provision-sites.sh --dry-run (Sprint 4)
+        run: |
+          set -euo pipefail
+          STUDENTS_CSV="$(mktemp)"
+          cat > "$STUDENTS_CSV" <<'EOF'
+          slug,owui_user_id,email,owui_password,litellm_key
+          ci-alex,uuid-ci-alex,ci-alex@example.com,ci-stub-pw-a,sk-ci-stub-alex
+          ci-bea,uuid-ci-bea,ci-bea@example.com,ci-stub-pw-b,sk-ci-stub-bea
+          EOF
+          export DOMAIN=ci.example.com
+          export COHORT_NAME=ci-cohort
+          export GCP_PROJECT_ID=ci-stub-project
+          export GCP_ZONE=us-central1-a
+          export VM_NAME=ci-stub-vm
+          export COHORT_STUDENTS_CSV_PATH="$STUDENTS_CSV"
+          ./scripts/provision-sites.sh --dry-run
+          if [ -f "$(dirname "$STUDENTS_CSV")/cohort-slots-ci-cohort.csv" ]; then
+            echo "::error::dry-run wrote cohort-slots CSV — should be no-op"
+            exit 1
+          fi
+          echo "✓ provision-sites.sh --dry-run passed (no CSV written)"
+
+      # ── Sprint 4 — generate-cards dry-run ────────────────────────────────
+      # Exercises CSV join + render code paths in dry-run mode.
+      - name: generate-cards.sh --dry-run (Sprint 4)
+        run: |
+          set -euo pipefail
+          STUDENTS_CSV="$(mktemp)"
+          SLOTS_CSV="$(mktemp)"
+          cat > "$STUDENTS_CSV" <<'EOF'
+          slug,owui_user_id,email,owui_password,litellm_key
+          ci-alex,uuid-ci-alex,ci-alex@example.com,ci-stub-pw-a,sk-ci-stub-alex
+          ci-bea,uuid-ci-bea,ci-bea@example.com,ci-stub-pw-b,sk-ci-stub-bea
+          EOF
+          cat > "$SLOTS_CSV" <<'EOF'
+          slug,slot,site_url,name
+          ci-alex,l01,https://l01.ci.example.com,ci-alex
+          ci-bea,l02,https://l02.ci.example.com,ci-bea
+          EOF
+          export DOMAIN=ci.example.com
+          export COHORT_NAME=ci-cohort
+          export COHORT_STUDENTS_CSV_PATH="$STUDENTS_CSV"
+          export COHORT_SLOTS_CSV_PATH="$SLOTS_CSV"
+          ./scripts/generate-cards.sh --dry-run
+          if [ -d "onboarding-cards-ci-cohort" ]; then
+            echo "::error::dry-run created onboarding-cards directory — should be no-op"
+            exit 1
+          fi
+          echo "✓ generate-cards.sh --dry-run passed (no files written)"
+
       - name: Dump logs on failure
         if: failure()
         working-directory: infra
