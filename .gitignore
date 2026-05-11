@@ -110,3 +110,5 @@ cohort-students.csv
 cohort-students*.csv
 cohort-slots.csv
 cohort-slots*.csv
+onboarding-cards/
+onboarding-cards-*/
