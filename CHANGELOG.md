@@ -9,6 +9,49 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.3.0] — 2026-05-10 — Sprint 3 wrap
+
+### Added
+
+- Open WebUI deployed as the student-facing chat surface at `chat.${DOMAIN}`
+- `infra/open-webui/functions/cultivlab_user_injection.py` — Filter Function injecting `user` field
+  per request (ADR-011)
+- `infra/litellm/callbacks/safety_moderation.py` — LiteLLM CustomLogger callback for real-time
+  content moderation via OpenAI `omni-moderation-latest` (ADR-012)
+- `scripts/provision-students.sh` — idempotent Open WebUI account provisioning from cohort-keys CSV
+- `scripts/lib/openwebui_admin.sh` — Open WebUI admin API wrapper (signin, user CRUD, dry-run
+  support)
+- ADR-011 (Open WebUI Filter Function design)
+- ADR-012 (LiteLLM safety moderation callback design)
+- `docs/BACKLOG.md` — running list of deferred work
+- `docs/sprint-reports/sprint-3-plan.md` — Sprint 3 deliverables with hard STOP gates
+- `docs/sprint-reports/sprint-3.md` — completion report
+- Caddy `chat.${DOMAIN}` route with auto-HTTPS (public, no IP allowlist)
+- CI workflow: Open WebUI + safety env stubs in synthesized .env, plus
+  `provision-students.sh --dry-run` step
+- 4 new env vars: `OPENWEBUI_SECRET_KEY`, `OPENWEBUI_ENABLE_SIGNUP`, `OPENWEBUI_DEFAULT_USER_ROLE`,
+  `SAFETY_LOG_ONLY`, `SAFETY_MODERATION_DISABLED`
+
+### Changed
+
+- `infra/docker-compose.yml` — added `open-webui` service + `openwebui-data` volume + callbacks
+  mount
+- `infra/litellm/config.yaml` — registered safety_moderation callback
+- `infra/Caddyfile.tmpl` — added `chat.${DOMAIN}` block
+- `.env.example` — removed obsolete `OPENWEBUI_ENABLE_USER_TRACKING`, added Sprint 3 + safety vars
+- `docs/PROJECT_BRIEF.md` — version updated to Sprint 3 / v0.3.0
+- `docs/architecture.md` — Open WebUI status updated from "Not built" to "Live"
+
+### Verified
+
+- Open WebUI serves at `https://chat.cultivlab.com` with valid Let's Encrypt TLS
+- Filter Function injects user UUID on every chat call (verified via LiteLLM Customer Usage)
+- `provision-students.sh` created 2 test-cohort accounts idempotently (first run new=2, second run
+  kept=2)
+- Safety moderation blocks flagged content (verified with deliberate self-harm prompt; Slack alert
+  fired)
+- CI all green on commit `146387e`
+
 ## [v0.2.0] — 2026-05-09 — Sprint 2 wrap
 
 ### Added
