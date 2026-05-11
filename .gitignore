@@ -106,3 +106,7 @@ students*.csv
 onboarding-cards/
 .DS_Store
 .DS_Store
+cohort-students.csv
+cohort-students*.csv
+cohort-slots.csv
+cohort-slots*.csv
