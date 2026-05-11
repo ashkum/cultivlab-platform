@@ -651,3 +651,62 @@ legitimate traffic during OpenAI outages and ChatGPT is a single point of failur
 - Source: infra/litellm/callbacks/safety_moderation.py
 - LiteLLM CustomLogger base class:
   github.com/BerriAI/litellm/blob/main/litellm/integrations/custom_logger.py
+
+## ADR-013 — Caddy + VM filesystem for student site slots (2026-05-11)
+
+**Status:** Accepted
+
+**Context:** Sprint 4 plan called for Firebase Hosting per ADR-005 ("Firebase Hosting for student
+sites"). Research during Sprint 4 Deliverable 1 confirmed Firebase Hosting does NOT support wildcard
+subdomains as of May 2026 — each custom domain must be explicitly added via the Firebase Console
+with up to 24h SSL cert acquisition delay per domain.
+
+Combined with a privacy concern (per-student name in URLs is PII), this triggered a design pivot.
+
+**Decision:** Host student sites on the existing VM, served by Caddy via a regex route pattern.
+Adopt slot-based subdomain naming (l01, l02, ...) instead of per-student named subdomains. Each slot
+maps to /srv/students/<slot>/ on the VM filesystem; Caddy serves static content from there with
+auto-HTTPS via Let'''s Encrypt.
+
+**Configuration:**
+
+- Caddyfile.tmpl block: l[0-9][0-9].${DOMAIN} { root \* /srv/students/{re.host.1}; file_server }
+- DNS: explicit A records per slot (l01.${DOMAIN} ... lNN.${DOMAIN}) all pointing at VM IP
+- Docker: Caddy container mounts /srv/students:ro
+- Provisioning: scripts/provision-sites.sh creates /srv/students/lNN/ from
+  templates/student-starter/ for each cohort student
+
+**Alternatives considered:**
+
+1. **Firebase Hosting (original ADR-005).** Rejected for Sprint 4: no wildcard support (each
+   subdomain manual), 24h cert wait per subdomain, 20-subdomain ceiling per apex domain, and the
+   architecture is more complex than needed for static cohort sites. May revisit later if scale or
+   CDN need justifies.
+
+2. **Single shared site (no per-student URL).** Rejected: students need a personal URL to share, and
+   slot-based naming preserves privacy without sacrificing personalization.
+
+3. **Per-student named subdomains (alice.${DOMAIN}).** Rejected for privacy: student first names in
+   URLs are PII; slot-based naming is anonymous.
+
+4. **Third-party static host (Netlify, GitHub Pages).** Rejected: adds a vendor, doesn'''t simplify
+   enough to justify the dependency.
+
+**Consequences:**
+
+- Eliminates 24h+ cert acquisition wait per cohort onboarding.
+- Slot subdomains reusable across cohorts (l01 reassigned to different students each cohort).
+- VM disk usage grows ~5-50MB per student site; e2-small handles 100+ slots easily.
+- VM single point of failure: if VM is down, student sites are down (same as api/chat). Acceptable
+  for cohort-scale operations.
+- Architecture extends naturally to dynamic agent backends (Sprint 5+ eval environments): same
+  Caddy + reverse-proxy pattern.
+- ADR-005 (Firebase Hosting) effectively superseded; preserved in history for reference but not
+  used.
+
+**References:**
+
+- Caddyfile slot block: infra/Caddyfile.tmpl
+- Compose mount: infra/docker-compose.yml caddy service volumes
+- Sprint 4 plan: docs/sprint-reports/sprint-3-plan.md (precursor); sprint-4 deliverables to come
+- ADR-005 (superseded for static sites): docs/DECISION_LOG.md

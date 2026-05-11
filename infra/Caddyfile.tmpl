@@ -2,11 +2,13 @@
 # Rendered to infra/Caddyfile by scripts/bootstrap.sh via envsubst.
 # DO NOT edit the rendered file (it is gitignored); edit this template.
 #
-# Three routes:
+# Four route patterns:
 #   api.${DOMAIN}    — public LiteLLM API. Auto-HTTPS, HTTP→HTTPS redirect.
 #   admin.${DOMAIN}  — LiteLLM admin UI. Auto-HTTPS. IP-locked. 403 from any
 #                       address not in ${FOUNDER_ALLOWED_IP}.
 #   chat.${DOMAIN}   — Open WebUI student chat surface. Auto-HTTPS, public.
+#   l##.${DOMAIN}    — Student site slots (Sprint 4). Static files from
+#                       /srv/students/<slot>/. Auto-HTTPS, public. See ADR-013.
 #
 # Caddy v2 supports multiple CIDRs in `remote_ip` separated by spaces.
 # bootstrap.sh normalizes commas in ${FOUNDER_ALLOWED_IP} to spaces before
@@ -39,4 +41,13 @@ admin.${DOMAIN} {
 chat.${DOMAIN} {
 	encode zstd gzip
 	reverse_proxy open-webui:8080
+}
+
+# Student site slots (Sprint 4) — slot-based subdomains for cohort use.
+# See ADR-013 for the design (privacy: no student names in URLs).
+# Caddy serves /srv/students/<slot>/ for any l00.${DOMAIN} through l99.${DOMAIN}.
+l[0-9][0-9].${DOMAIN} {
+	root * /srv/students/{re.host.1}
+	file_server
+	encode zstd gzip
 }

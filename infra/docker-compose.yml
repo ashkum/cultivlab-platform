@@ -117,6 +117,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
+      - /srv/students:/srv/students:ro
     networks:
       - cultivlab-net
     healthcheck:
