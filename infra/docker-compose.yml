@@ -90,6 +90,7 @@ services:
       SLACK_WEBHOOK_PLATFORM: ${SLACK_WEBHOOK_PLATFORM}
     volumes:
       - ./litellm/config.yaml:/app/config.yaml:ro
+      - ./litellm/callbacks:/app/callbacks:ro
     networks:
       - cultivlab-net
     healthcheck:

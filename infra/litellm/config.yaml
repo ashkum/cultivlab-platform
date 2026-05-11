@@ -50,3 +50,4 @@ general_settings:
 litellm_settings:
   drop_params: true
   set_verbose: false
+  callbacks: ["callbacks.safety_moderation.proxy_handler_instance"]
