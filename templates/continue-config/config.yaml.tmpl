@@ -1,0 +1,45 @@
+# Continue.dev configuration for CultivLab student
+# Place this file at ~/.continue/config.yaml in your VS Code workspace.
+# Three models routed through CultivLab's LiteLLM proxy.
+
+name: CultivLab Student
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Claude Sonnet
+    provider: openai
+    apiBase: https://api.${DOMAIN}/v1
+    apiKey: ${STUDENT_LITELLM_KEY}
+    model: claude-sonnet-4-6
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      temperature: 0.7
+      maxTokens: 4096
+
+  - name: GPT-4o Mini
+    provider: openai
+    apiBase: https://api.${DOMAIN}/v1
+    apiKey: ${STUDENT_LITELLM_KEY}
+    model: gpt-4o-mini
+    roles:
+      - chat
+      - edit
+    defaultCompletionOptions:
+      temperature: 0.7
+      maxTokens: 4096
+
+  - name: Gemini Flash
+    provider: openai
+    apiBase: https://api.${DOMAIN}/v1
+    apiKey: ${STUDENT_LITELLM_KEY}
+    model: gemini-2.5-flash
+    roles:
+      - chat
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 250
+      maxPromptTokens: 1024
