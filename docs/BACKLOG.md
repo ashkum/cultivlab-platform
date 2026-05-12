@@ -254,3 +254,51 @@ install VS Code, install Continue.dev extension, paste the config, ask Claude a 
 response comes through. Document any setup gotchas.
 
 **When to fix:** Sprint 6 end-to-end run-through.
+
+## Unify or symlink /opt/cultivlab/.env files
+
+**Priority:** medium (operational risk) **Source:** 2026-05-11 OPENAI_API_KEY rotation incident
+
+**Context:** The VM has two .env files: `/opt/cultivlab/.env` and `/opt/cultivlab/repo/.env`. Both
+must be kept in sync for the platform to work correctly. Updating one and forgetting the other has
+been a recurring footgun across Sprint 2-4 deployments.
+
+**Fix:** Either (a) symlink `/opt/cultivlab/repo/.env -> /opt/cultivlab/.env` so they're literally
+the same file, or (b) update bootstrap.sh to detect divergence and error out before starting
+containers.
+
+**When to fix:** Sprint 6 hardening.
+
+## Document key rotation procedure in runbook
+
+**Priority:** medium (do before real cohort) **Source:** 2026-05-11 OPENAI_API_KEY rotation incident
+
+**Context:** Rotating OPENAI_API_KEY (or any provider key, or LITELLM_MASTER_KEY) currently
+requires:
+
+1. Revoke old key at provider
+2. Generate new key
+3. Update /opt/cultivlab/.env
+4. Update /opt/cultivlab/repo/.env
+5. Restart litellm container
+
+This procedure should be a written runbook so it's executable under stress.
+
+**Fix:** Create `docs/runbooks/rotate-provider-key.md` documenting the procedure with verification
+steps.
+
+**When to fix:** Sprint 6 docs pass.
+
+## .env files should never be cat'd in screensharing/chat contexts
+
+**Priority:** low (lesson learned, documentation only) **Source:** 2026-05-11 OPENAI_API_KEY
+rotation incident
+
+**Context:** During debugging, `cat /opt/cultivlab/.env` was used which displayed the OPENAI_API_KEY
+in plain text. Even in a SSH session, the output could be captured by any tool that logs terminal
+contents. The operator must rotate immediately when this happens.
+
+**Fix:** When debugging credentials, use `grep -E "^VAR_NAME" .env | sed 's/=.*/=<redacted>/'` to
+confirm presence without revealing values.
+
+**When to fix:** Add to CLAUDE.md or scripts/README.md as an operator hygiene note.
