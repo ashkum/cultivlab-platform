@@ -103,6 +103,40 @@ if ! [[ "${STUDENT_PASSWORD_LENGTH}" =~ ^[0-9]+$ ]] ||
   exit 1
 fi
 
+# Load existing cohort-students CSV (if any) to preserve recorded passwords on
+# re-runs. Pattern mirrors _existing_key_for_slug in provision-cohort.sh.
+# CSV header: slug,owui_user_id,email,owui_password,litellm_key
+EXISTING_PW_SLUGS=()
+EXISTING_PW_PASSWORDS=()
+OUT_CSV="$(dirname "${COHORT_KEYS_CSV_PATH}")/cohort-students-${COHORT_NAME}.csv"
+if [[ -f "${OUT_CSV}" ]]; then
+  log_info "loading existing cohort-students.csv: ${OUT_CSV}"
+  ep_first=1
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    if [[ ${ep_first} -eq 1 ]]; then
+      ep_first=0
+      continue
+    fi
+    if [[ -z "$(printf '%s' "${line}" | tr -d '[:space:]')" ]]; then continue; fi
+    IFS=',' read -ra ep_parts <<<"${line},__EOL__"
+    unset "ep_parts[$((${#ep_parts[@]} - 1))]"
+    EXISTING_PW_SLUGS+=("${ep_parts[0]:-}")
+    EXISTING_PW_PASSWORDS+=("${ep_parts[3]:-}")
+  done <"${OUT_CSV}"
+  log_info "loaded ${#EXISTING_PW_SLUGS[@]} existing password rows"
+fi
+
+_existing_password_for_slug() {
+  local slug="$1" i
+  for ((i = 0; i < ${#EXISTING_PW_SLUGS[@]}; i++)); do
+    if [[ "${EXISTING_PW_SLUGS[$i]}" == "${slug}" ]]; then
+      printf '%s' "${EXISTING_PW_PASSWORDS[$i]}"
+      return 0
+    fi
+  done
+  return 1
+}
+
 # ---------------------------------------------------------------------------
 # Init Open WebUI admin client
 # ---------------------------------------------------------------------------
@@ -169,10 +203,17 @@ provision_one() {
     fi
     log_info "row slug=${slug}: user already exists (id=${owui_id}); kept"
     PROVISIONED_KEPT=$((PROVISIONED_KEPT + 1))
+    # Preserve the recorded password — writing empty string would destroy it.
+    local preserved_pw=""
+    if preserved_pw="$(_existing_password_for_slug "${slug}")"; then
+      log_info "row slug=${slug}: preserved recorded password from existing CSV"
+    else
+      log_warn "row slug=${slug}: no recorded password found; use reset-student-password.sh to set one"
+    fi
     RESULT_SLUGS+=("${slug}")
     RESULT_OWUI_USER_IDS+=("${owui_id}")
     RESULT_EMAILS+=("${email}")
-    RESULT_OWUI_PASSWORDS+=("")
+    RESULT_OWUI_PASSWORDS+=("${preserved_pw}")
     RESULT_LITELLM_KEYS+=("${litellm_key}")
     return 0
   elif [[ "${rc}" -eq 2 ]]; then
@@ -238,7 +279,6 @@ done <"${COHORT_KEYS_CSV_PATH}"
 # ---------------------------------------------------------------------------
 
 if ! is_dry_run; then
-  OUT_CSV="$(dirname "${COHORT_KEYS_CSV_PATH}")/cohort-students-${COHORT_NAME}.csv"
   log_info "writing ${OUT_CSV}"
   {
     echo "slug,owui_user_id,email,owui_password,litellm_key"

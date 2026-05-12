@@ -52,8 +52,8 @@ def _ow_signin(ow_url: str, email: str, password: str) -> str:
     return str(token)
 
 
-def _ow_find_user_id(ow_url: str, jwt: str, name: str) -> str | None:
-    """GET /api/v1/users/ → find user by name (case-insensitive). Returns id or None."""
+def _ow_find_user(ow_url: str, jwt: str, name: str) -> dict | None:
+    """GET /api/v1/users/ → find user by name (case-insensitive). Returns full user dict or None."""
     req = urllib.request.Request(
         f"{ow_url}/api/v1/users/",
         headers={"Authorization": f"Bearer {jwt}"},
@@ -67,15 +67,25 @@ def _ow_find_user_id(ow_url: str, jwt: str, name: str) -> str | None:
     name_lower = name.lower()
     for user in users:
         if (user.get("name") or "").lower() == name_lower:
-            return str(user["id"])
+            return user
     return None
 
 
-def _ow_set_role(ow_url: str, jwt: str, user_id: str, role: str) -> None:
-    """POST /api/v1/users/{id}/update with {role}. Raises OWError on HTTP error."""
-    body = json.dumps({"role": role}).encode()
+def _ow_set_role(ow_url: str, jwt: str, user: dict, role: str) -> None:
+    """POST /api/v1/users/{id}/update with full UserUpdateForm payload.
+
+    OW v0.5.20 requires all four fields (name, email, profile_image_url, role)
+    in the update body — sending only {role} causes HTTP 422.
+    """
+    payload = {
+        "name": user.get("name") or "",
+        "email": user.get("email") or "",
+        "profile_image_url": user.get("profile_image_url") or "",
+        "role": role,
+    }
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(
-        f"{ow_url}/api/v1/users/{user_id}/update",
+        f"{ow_url}/api/v1/users/{user['id']}/update",
         data=body,
         headers={
             "Content-Type": "application/json",
@@ -112,11 +122,11 @@ def ow_disable_student(name: str, disabled: bool) -> str:
             "OPENWEBUI_URL / OPENWEBUI_ADMIN_EMAIL / OPENWEBUI_ADMIN_PASSWORD not configured"
         )
     jwt = _ow_signin(ow_url, email, password)
-    user_id = _ow_find_user_id(ow_url, jwt, name)
-    if not user_id:
+    user = _ow_find_user(ow_url, jwt, name)
+    if not user:
         raise OWError(f"no OW account found for name '{name}'")
     role = "pending" if disabled else "user"
-    _ow_set_role(ow_url, jwt, user_id, role)
+    _ow_set_role(ow_url, jwt, user, role)
     return "chat suspended" if disabled else "chat restored"
 
 

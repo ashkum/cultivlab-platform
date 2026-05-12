@@ -138,10 +138,12 @@ stage_install_dir() {
   run_or_dry rm -rf "${WORK_DIR}"
   run_or_dry cp -R "${source_infra}" "${WORK_DIR}"
 
-  # Place .env at /opt/cultivlab/.env so docker compose --env-file finds it.
+  # Symlink /opt/cultivlab/.env → repo .env so docker compose and all scripts
+  # always read the same single file.  ln -sf is idempotent — replaces any
+  # previous copy or stale symlink on every bootstrap run.
   if [[ -f "${ENV_FILE}" ]]; then
-    run_or_dry cp "${ENV_FILE}" "${ENV_TARGET}"
-    run_or_dry chmod 600 "${ENV_TARGET}"
+    run_or_dry ln -sf "${ENV_FILE}" "${ENV_TARGET}"
+    run_or_dry chmod 600 "${ENV_FILE}"
   else
     log_warn ".env not found at ${ENV_FILE}; relying on shell env for compose"
   fi
@@ -190,6 +192,20 @@ compose_up() {
   log_info "step 6/9: docker compose up -d"
   run_or_dry docker compose --env-file "${ENV_TARGET}" \
     -f "${WORK_DIR}/docker-compose.yml" up -d
+}
+
+# ----------------------------------------------------------------------------
+# Step 6b: Force-restart Caddy so the freshly-rendered Caddyfile takes effect.
+#
+# `docker compose up -d` never restarts a container that is already running,
+# so without this step a re-run of bootstrap picks up a new Caddyfile on disk
+# but Caddy keeps serving the old in-memory config.  Caddy reload is ~1s and
+# handles in-flight connections gracefully.
+# ----------------------------------------------------------------------------
+restart_caddy() {
+  log_info "step 6b/9: restarting caddy to apply rendered Caddyfile"
+  run_or_dry docker compose --env-file "${ENV_TARGET}" \
+    -f "${WORK_DIR}/docker-compose.yml" restart caddy
 }
 
 # ----------------------------------------------------------------------------
@@ -273,6 +289,7 @@ main() {
   render_caddyfile
   compose_pull
   compose_up
+  restart_caddy
   wait_for_litellm_health
   self_test_public
   print_summary

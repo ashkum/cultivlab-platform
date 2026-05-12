@@ -135,6 +135,7 @@ services:
         condition: service_healthy
     environment:
       WEBUI_AUTH: "true"
+      WEBUI_NAME: ${WEBUI_NAME:-CultivLab}
       ENABLE_SIGNUP: ${OPENWEBUI_ENABLE_SIGNUP}
       DEFAULT_USER_ROLE: ${OPENWEBUI_DEFAULT_USER_ROLE}
       WEBUI_SECRET_KEY: ${OPENWEBUI_SECRET_KEY}
