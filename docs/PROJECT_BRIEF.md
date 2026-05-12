@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 5.5 — v0.5.5
+**Living document. Update at the start of every sprint.** Last updated: Sprint 6 — v0.6.0
 
 ---
 
@@ -121,7 +121,7 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.5.5** — Sprint 5.5
+**v0.6.0** — Sprint 6
 
 Founder Console deployed at `founder.${DOMAIN}`. Operator can now manage the cohort from a browser
 (including on mobile) without SSH:
@@ -148,6 +148,7 @@ Founder Console deployed at `founder.${DOMAIN}`. Operator can now manage the coh
 | v0.4.0  | Sprint 4   | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                        |
 | v0.5.0  | Sprint 5   | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install              |
 | v0.5.5  | Sprint 5.5 | 2026-05-12 | Founder Console at founder.${DOMAIN}: student grid, pause/resume, topup, bcrypt auth, IP-locked           |
+| v0.6.0  | Sprint 6   | 2026-05-12 | Founder Console: OW account suspend (best-effort), dashboard auto-refresh (HX-Refresh) after all actions  |
 
 ---
 

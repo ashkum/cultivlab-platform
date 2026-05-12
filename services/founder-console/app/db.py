@@ -54,6 +54,7 @@ def get_conn() -> Generator[psycopg2.extensions.connection, None, None]:
 @dataclass
 class StudentRow:
     slug: str
+    name: str        # display name from LiteLLM metadata (used for OW lookup)
     token: str       # hashed — used as write-action key, never displayed
     blocked: bool
     total_spend: float
@@ -135,10 +136,12 @@ def get_student_rows(cohort_name: str) -> list[StudentRow]:
                 """
                 SELECT
                     vt.token,
-                    COALESCE(vt.metadata->>'slug', LEFT(vt.token, 8)) AS slug,
-                    COALESCE(vt.blocked, false)   AS blocked,
-                    COALESCE(vt.spend, 0)         AS total_spend,
-                    COALESCE(vt.max_budget, 0)    AS max_budget
+                    COALESCE(vt.metadata->>'slug', LEFT(vt.token, 8))   AS slug,
+                    COALESCE(vt.metadata->>'name', vt.metadata->>'slug',
+                             LEFT(vt.token, 8))                         AS student_name,
+                    COALESCE(vt.blocked, false)                         AS blocked,
+                    COALESCE(vt.spend, 0)                               AS total_spend,
+                    COALESCE(vt.max_budget, 0)                          AS max_budget
                 FROM "LiteLLM_VerificationToken" vt
                 WHERE vt.team_id = (
                     SELECT team_id FROM "LiteLLM_TeamTable"
@@ -188,6 +191,7 @@ def get_student_rows(cohort_name: str) -> list[StudentRow]:
         rows.append(
             StudentRow(
                 slug=slug,
+                name=key["student_name"],
                 token=token,
                 blocked=bool(key["blocked"]),
                 total_spend=float(key["total_spend"]),

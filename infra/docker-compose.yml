@@ -166,6 +166,9 @@ services:
       FOUNDER_CONSOLE_SECRET_KEY: ${FOUNDER_CONSOLE_SECRET_KEY}
       COHORT_NAME: ${COHORT_NAME}
       DOMAIN: ${DOMAIN}
+      OPENWEBUI_URL: ${OPENWEBUI_URL:-http://open-webui:8080}
+      OPENWEBUI_ADMIN_EMAIL: ${OPENWEBUI_ADMIN_EMAIL}
+      OPENWEBUI_ADMIN_PASSWORD: ${OPENWEBUI_ADMIN_PASSWORD}
     volumes:
       - /srv/students:/srv/students:ro
     networks:

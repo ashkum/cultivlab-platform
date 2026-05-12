@@ -17,7 +17,9 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from ..actions import (
-    get_token_for_slug,
+    OWError,
+    get_student_info,
+    ow_disable_student,
     set_cohort_blocked,
     set_student_blocked,
     topup_student_budget,
@@ -36,14 +38,20 @@ def _guard(request: Request) -> bool:
 
 def _flash(message: str, kind: str = "ok") -> HTMLResponse:
     """
-    Return a tiny HTML fragment for HTMX out-of-band swap into #flash.
-    kind: "ok" → green, "error" → red.
+    Return a small HTML fragment for HTMX swap into #flash.
+    kind: "ok" → green, "warn" → amber, "error" → red.
     """
-    color = "#2d6a4f" if kind == "ok" else "#9b2226"
+    colors = {"ok": "#2d6a4f", "warn": "#b5451b", "error": "#9b2226"}
+    color = colors.get(kind, "#9b2226")
     return HTMLResponse(
         f'<div id="flash" style="color:{color};font-weight:600;padding:4px 0">'
         f"{message}</div>"
     )
+
+
+def _refresh() -> HTMLResponse:
+    """Tell HTMX to do a full page reload (status badges update immediately)."""
+    return HTMLResponse("", headers={"HX-Refresh": "true"})
 
 
 # ---------------------------------------------------------------------------
@@ -56,16 +64,23 @@ async def pause_student(slug: str, request: Request) -> HTMLResponse | RedirectR
     if not _guard(request):
         return RedirectResponse("/login", status_code=302)
     cohort = get_cohort_name()
-    token = get_token_for_slug(cohort, slug)
-    if not token:
+    info = get_student_info(cohort, slug)
+    if not info:
         return _flash(f"Student '{slug}' not found in cohort '{cohort}'.", "error")
+    token, name = info
     ok = set_student_blocked(token, blocked=True)
     if not ok:
         return _flash(f"DB update failed for '{slug}' — token not matched.", "error")
-    return _flash(
-        f"⛔ {slug} paused (IDE blocked). "
-        f"To suspend chat, disable their account via the admin panel."
-    )
+    # Best-effort OW suspend — LiteLLM block always committed above.
+    try:
+        ow_msg = ow_disable_student(name, disabled=True)
+        return _refresh()  # full page reload shows updated status badge
+    except OWError as exc:
+        return _flash(
+            f"⛔ {slug} IDE blocked. ⚠️ Chat not suspended — {exc}. "
+            f"Disable manually via the admin panel.",
+            "warn",
+        )
 
 
 @router.post("/students/{slug}/resume", response_class=HTMLResponse)
@@ -75,13 +90,23 @@ async def resume_student(
     if not _guard(request):
         return RedirectResponse("/login", status_code=302)
     cohort = get_cohort_name()
-    token = get_token_for_slug(cohort, slug)
-    if not token:
+    info = get_student_info(cohort, slug)
+    if not info:
         return _flash(f"Student '{slug}' not found in cohort '{cohort}'.", "error")
+    token, name = info
     ok = set_student_blocked(token, blocked=False)
     if not ok:
         return _flash(f"DB update failed for '{slug}' — token not matched.", "error")
-    return _flash(f"✅ {slug} resumed.")
+    # Best-effort OW restore.
+    try:
+        ow_msg = ow_disable_student(name, disabled=False)
+        return _refresh()
+    except OWError as exc:
+        return _flash(
+            f"✅ {slug} IDE unblocked. ⚠️ Chat restore failed — {exc}. "
+            f"Re-enable manually via the admin panel.",
+            "warn",
+        )
 
 
 @router.post("/students/{slug}/topup", response_class=HTMLResponse)
@@ -95,13 +120,14 @@ async def topup_student(
     if amount <= 0 or amount > _MAX_TOPUP:
         return _flash(f"Amount must be $0.01–${_MAX_TOPUP:.0f}.", "error")
     cohort = get_cohort_name()
-    token = get_token_for_slug(cohort, slug)
-    if not token:
+    info = get_student_info(cohort, slug)
+    if not info:
         return _flash(f"Student '{slug}' not found in cohort '{cohort}'.", "error")
+    token, _ = info
     ok = topup_student_budget(token, amount)
     if not ok:
         return _flash(f"DB update failed for '{slug}'.", "error")
-    return _flash(f"✅ Added ${amount:.2f} to {slug}'s budget.")
+    return _refresh()
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +141,7 @@ async def pause_cohort(request: Request) -> HTMLResponse | RedirectResponse:
         return RedirectResponse("/login", status_code=302)
     cohort = get_cohort_name()
     count = set_cohort_blocked(cohort, blocked=True)
-    return _flash(f"⛔ Cohort paused — {count} key(s) blocked (IDE access cut).")
+    return _refresh()
 
 
 @router.post("/cohort/resume", response_class=HTMLResponse)
@@ -124,4 +150,4 @@ async def resume_cohort(request: Request) -> HTMLResponse | RedirectResponse:
         return RedirectResponse("/login", status_code=302)
     cohort = get_cohort_name()
     count = set_cohort_blocked(cohort, blocked=False)
-    return _flash(f"✅ Cohort resumed — {count} key(s) unblocked.")
+    return _refresh()

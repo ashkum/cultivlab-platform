@@ -9,6 +9,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.6.0] — 2026-05-12 — Sprint 6 wrap
+
+### Added
+
+- `services/founder-console/app/actions.py` — `OWError` exception; `_ow_signin`, `_ow_find_user_id`,
+  `_ow_set_role` private helpers; `ow_disable_student(name, disabled)` — best-effort Open WebUI
+  account suspend/restore via admin API (role→pending/user)
+- `services/founder-console/app/routes/student.py` — `_refresh()` helper returning
+  `HX-Refresh: true` header; `"warn"` kind (amber) in `_flash`
+- New env vars in `.env.example` (Sprint 6 section): `OPENWEBUI_ADMIN_EMAIL`,
+  `OPENWEBUI_ADMIN_PASSWORD` (missing from Sprint 3), `OPENWEBUI_URL`
+
+### Changed
+
+- `services/founder-console/app/db.py` — `StudentRow` gains `name: str` field (from
+  `metadata->>'name'`); main SELECT extended to include `student_name`
+- `services/founder-console/app/actions.py` — `get_token_for_slug` renamed to `get_student_info`,
+  now returns `(token, name) | None`
+- `services/founder-console/app/routes/student.py` — pause/resume endpoints now attempt OW account
+  suspend after LiteLLM key block (best-effort: OWError → amber warn flash, key block always
+  commits); all five action endpoints return `HX-Refresh: true` on success so status badges update
+  immediately without F5
+- `infra/docker-compose.yml` — founder-console service env gains `OPENWEBUI_URL`,
+  `OPENWEBUI_ADMIN_EMAIL`, `OPENWEBUI_ADMIN_PASSWORD`
+
+### Known limitations
+
+- OW role→pending mechanism is unverified against live v0.5.20; if the endpoint or field name
+  differs, an amber warning flash instructs the operator to disable manually. LiteLLM key block
+  always commits regardless.
+
 ## [v0.5.5] — 2026-05-12 — Sprint 5.5 wrap
 
 ### Added

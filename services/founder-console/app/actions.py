@@ -15,7 +15,109 @@ budget changes take effect within one minute of the UPDATE.
 
 from __future__ import annotations
 
+import json
+import os
+import urllib.error
+import urllib.request
+
 from .db import get_conn
+
+
+# ---------------------------------------------------------------------------
+# Open WebUI admin API helpers (best-effort — see Sprint 6 / ADR-008)
+# ---------------------------------------------------------------------------
+
+
+class OWError(Exception):
+    """Raised when an Open WebUI API call fails."""
+
+
+def _ow_signin(ow_url: str, email: str, password: str) -> str:
+    """POST /api/v1/auths/signin → JWT string. Raises OWError on failure."""
+    body = json.dumps({"email": email, "password": password}).encode()
+    req = urllib.request.Request(
+        f"{ow_url}/api/v1/auths/signin",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+    except Exception as exc:
+        raise OWError(f"OW signin failed: {exc}") from exc
+    token = data.get("token") or data.get("jwt")
+    if not token:
+        raise OWError("OW signin: no token in response")
+    return str(token)
+
+
+def _ow_find_user_id(ow_url: str, jwt: str, name: str) -> str | None:
+    """GET /api/v1/users/ → find user by name (case-insensitive). Returns id or None."""
+    req = urllib.request.Request(
+        f"{ow_url}/api/v1/users/",
+        headers={"Authorization": f"Bearer {jwt}"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            users = json.loads(resp.read())
+    except Exception as exc:
+        raise OWError(f"OW list users failed: {exc}") from exc
+    name_lower = name.lower()
+    for user in users:
+        if (user.get("name") or "").lower() == name_lower:
+            return str(user["id"])
+    return None
+
+
+def _ow_set_role(ow_url: str, jwt: str, user_id: str, role: str) -> None:
+    """POST /api/v1/users/{id}/update with {role}. Raises OWError on HTTP error."""
+    body = json.dumps({"role": role}).encode()
+    req = urllib.request.Request(
+        f"{ow_url}/api/v1/users/{user_id}/update",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {jwt}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as _resp:
+            pass
+    except urllib.error.HTTPError as exc:
+        raise OWError(f"OW update user: HTTP {exc.code}") from exc
+    except Exception as exc:
+        raise OWError(f"OW update user: {exc}") from exc
+
+
+def ow_disable_student(name: str, disabled: bool) -> str:
+    """
+    Attempt to suspend or restore a student's Open WebUI account by name match.
+
+    - disabled=True  → sets OW role to 'pending' (blocks chat login)
+    - disabled=False → sets OW role to 'user' (restores chat access)
+
+    Returns a short status string for inclusion in the flash message.
+    Raises OWError if config env vars are missing or any API call fails.
+    This is intentionally best-effort: callers must not roll back the
+    LiteLLM key block if this raises.
+    """
+    ow_url = os.getenv("OPENWEBUI_URL", "").rstrip("/")
+    email = os.getenv("OPENWEBUI_ADMIN_EMAIL", "")
+    password = os.getenv("OPENWEBUI_ADMIN_PASSWORD", "")
+    if not (ow_url and email and password):
+        raise OWError(
+            "OPENWEBUI_URL / OPENWEBUI_ADMIN_EMAIL / OPENWEBUI_ADMIN_PASSWORD not configured"
+        )
+    jwt = _ow_signin(ow_url, email, password)
+    user_id = _ow_find_user_id(ow_url, jwt, name)
+    if not user_id:
+        raise OWError(f"no OW account found for name '{name}'")
+    role = "pending" if disabled else "user"
+    _ow_set_role(ow_url, jwt, user_id, role)
+    return "chat suspended" if disabled else "chat restored"
 
 
 def set_student_blocked(token: str, blocked: bool) -> bool:
@@ -83,16 +185,20 @@ def set_cohort_blocked(cohort_name: str, blocked: bool) -> int:
     return updated
 
 
-def get_token_for_slug(cohort_name: str, slug: str) -> str | None:
+def get_student_info(
+    cohort_name: str, slug: str
+) -> tuple[str, str] | None:
     """
-    Return the hashed token for a student identified by cohort + slug.
+    Return (token, name) for a student identified by cohort + slug.
+    name falls back to slug if not set in metadata.
     Returns None if not found.
     """
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT token
+                SELECT token,
+                       COALESCE(metadata->>'name', %s) AS student_name
                 FROM "LiteLLM_VerificationToken"
                 WHERE team_id = (
                     SELECT team_id FROM "LiteLLM_TeamTable"
@@ -101,7 +207,9 @@ def get_token_for_slug(cohort_name: str, slug: str) -> str | None:
                 AND metadata->>'slug' = %s
                 LIMIT 1
                 """,
-                (cohort_name, slug),
+                (slug, cohort_name, slug),
             )
             row = cur.fetchone()
-    return row["token"] if row else None
+    if not row:
+        return None
+    return row["token"], row["student_name"]
