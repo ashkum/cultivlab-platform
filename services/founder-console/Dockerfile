@@ -12,6 +12,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Bundle HTMX locally — avoids CDN dependency + SRI mismatch in browsers
+RUN mkdir -p /app/static && \
+    python -c "import urllib.request; urllib.request.urlretrieve('https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js', '/app/static/htmx.min.js')"
+
 COPY app/ ./app/
 
 EXPOSE 8080

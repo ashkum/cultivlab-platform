@@ -59,7 +59,7 @@ def _refresh() -> HTMLResponse:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/students/{slug}/pause", response_class=HTMLResponse)
+@router.post("/students/{slug}/pause", response_class=HTMLResponse, response_model=None)
 async def pause_student(slug: str, request: Request) -> HTMLResponse | RedirectResponse:
     if not _guard(request):
         return RedirectResponse("/login", status_code=302)
@@ -83,7 +83,7 @@ async def pause_student(slug: str, request: Request) -> HTMLResponse | RedirectR
         )
 
 
-@router.post("/students/{slug}/resume", response_class=HTMLResponse)
+@router.post("/students/{slug}/resume", response_class=HTMLResponse, response_model=None)
 async def resume_student(
     slug: str, request: Request
 ) -> HTMLResponse | RedirectResponse:
@@ -109,7 +109,7 @@ async def resume_student(
         )
 
 
-@router.post("/students/{slug}/topup", response_class=HTMLResponse)
+@router.post("/students/{slug}/topup", response_class=HTMLResponse, response_model=None)
 async def topup_student(
     slug: str,
     request: Request,
@@ -135,7 +135,7 @@ async def topup_student(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/cohort/pause", response_class=HTMLResponse)
+@router.post("/cohort/pause", response_class=HTMLResponse, response_model=None)
 async def pause_cohort(request: Request) -> HTMLResponse | RedirectResponse:
     if not _guard(request):
         return RedirectResponse("/login", status_code=302)
@@ -144,7 +144,7 @@ async def pause_cohort(request: Request) -> HTMLResponse | RedirectResponse:
     return _refresh()
 
 
-@router.post("/cohort/resume", response_class=HTMLResponse)
+@router.post("/cohort/resume", response_class=HTMLResponse, response_model=None)
 async def resume_cohort(request: Request) -> HTMLResponse | RedirectResponse:
     if not _guard(request):
         return RedirectResponse("/login", status_code=302)

@@ -20,7 +20,7 @@ from ..db import get_cohort_name, get_cohort_summary, get_student_rows
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse, response_model=None)
 async def dashboard(request: Request) -> HTMLResponse | RedirectResponse:
     if not verify_cookie(request):
         return RedirectResponse("/login", status_code=302)

@@ -23,6 +23,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .auth import sign_cookie, verify_cookie, verify_password
@@ -36,6 +37,10 @@ app = FastAPI(title="CultivLab Founder Console", docs_url=None, redoc_url=None)
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
+
+# Serve HTMX and other static assets bundled into the image (no CDN dependency)
+_STATIC_DIR = Path(__file__).parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 # Share the Jinja2 instance with routers via app.state
 app.state.templates = _templates
@@ -59,7 +64,7 @@ async def health() -> JSONResponse:
 # ---------------------------------------------------------------------------
 
 
-@app.get("/login", response_class=HTMLResponse)
+@app.get("/login", response_class=HTMLResponse, response_model=None)
 async def login_form(request: Request) -> HTMLResponse | RedirectResponse:
     if verify_cookie(request):
         return RedirectResponse("/", status_code=302)
@@ -68,7 +73,7 @@ async def login_form(request: Request) -> HTMLResponse | RedirectResponse:
     )
 
 
-@app.post("/login")
+@app.post("/login", response_model=None)
 async def login_submit(request: Request) -> HTMLResponse | RedirectResponse:
     form = await request.form()
     password = str(form.get("password", ""))
@@ -94,7 +99,7 @@ async def login_submit(request: Request) -> HTMLResponse | RedirectResponse:
     return response
 
 
-@app.get("/logout")
+@app.get("/logout", response_model=None)
 async def logout() -> RedirectResponse:
     response = RedirectResponse("/login", status_code=302)
     response.delete_cookie("fc_session")
