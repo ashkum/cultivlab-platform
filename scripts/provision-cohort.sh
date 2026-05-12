@@ -205,44 +205,14 @@ provision_one() {
     '{cohort:$cohort,slug:$slug,name:$name,parent_email:$parent_email,
       daily_budget:$daily,weekly_budget:$weekly}')"
 
-  if litellm_key_get "${TEAM_ID}" "${key_alias}"; then
-    local token curr_max curr_soft curr_rpm curr_tpm
-    token="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '.token // .key_id // empty')"
-    if [[ -z "${token}" ]]; then
-      log_error "row slug=${slug}: existing key has no token in response"
-      return 1
-    fi
-    curr_max="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.max_budget // 0) | tonumber')"
-    curr_soft="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.soft_budget // 0) | tonumber')"
-    curr_rpm="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.rpm_limit // 0) | tonumber')"
-    curr_tpm="$(printf '%s' "${LITELLM_LAST_BODY}" | jq -r '(.tpm_limit // 0) | tonumber')"
-
-    if ! _amount_eq "${curr_max}" "${max_b}" ||
-      ! _amount_eq "${curr_soft}" "${STUDENT_SOFT_BUDGET}" ||
-      ! _amount_eq "${curr_rpm}" "${rpm}" ||
-      ! _amount_eq "${curr_tpm}" "${tpm}"; then
-      log_info "row slug=${slug}: updating key budgets/limits"
-      if ! litellm_key_update "${token}" "${max_b}" "${STUDENT_SOFT_BUDGET}" "${rpm}" "${tpm}" "${metadata}"; then
-        log_error "row slug=${slug}: key update failed"
-        return 1
-      fi
-      PROVISIONED_UPDATED=$((PROVISIONED_UPDATED + 1))
-    else
-      log_info "row slug=${slug}: existing key in sync"
-      PROVISIONED_KEPT=$((PROVISIONED_KEPT + 1))
-    fi
-
-    local plaintext
-    if plaintext="$(_existing_key_for_slug "${slug}")"; then
-      :
-    else
-      plaintext=""
-    fi
-    if [[ -z "${plaintext}" ]]; then
-      log_warn "row slug=${slug}: no recorded plaintext; row omitted from cohort-keys.csv (re-issue the key if needed)"
-      return 0
-    fi
-    _record_row "${slug}" "${name}" "${email}" "${parent_email}" "${plaintext}" "${key_alias}"
+  # Fast path: if slug is already in cohort-keys.csv, the key exists.
+  # Use CSV as the idempotency source instead of the LiteLLM /key/list API
+  # (which requires the unsupported return_full_object parameter on this version).
+  local existing_plaintext
+  if existing_plaintext="$(_existing_key_for_slug "${slug}")"; then
+    log_info "row slug=${slug}: existing key in CSV, keeping"
+    PROVISIONED_KEPT=$((PROVISIONED_KEPT + 1))
+    _record_row "${slug}" "${name}" "${email}" "${parent_email}" "${existing_plaintext}" "${key_alias}"
     return 0
   fi
 
