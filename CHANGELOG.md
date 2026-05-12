@@ -9,6 +9,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.7.0] — 2026-05-12 — Sprint 7 wrap
+
+### Added
+
+- `scripts/reset-student-password.sh` — resets a student's Open WebUI password; primary path via OW
+  admin API (`POST /api/v1/users/{id}/update`), fallback via bcrypt hash inside OW container +
+  direct `psql UPDATE auth`; updates `cohort-students-${COHORT}.csv` on success; `--dry-run`
+- `docs/runbooks/rotate-provider-key.md` — step-by-step guide for rotating Anthropic, OpenAI, and
+  Vertex AI provider keys with zero downtime: generate new key → update `.env` → push to VM →
+  force-recreate LiteLLM → smoke test → revoke old key
+- `docs/runbooks/continue-dev-smoke-test.md` — pre-cohort operator runbook to verify Continue.dev
+  extension works with the platform: install, configure `config.json`, test chat + autocomplete,
+  verify spend attribution, optional budget enforcement test, version recording
+
+### Changed
+
+- `scripts/bootstrap.sh` — `stage_install_dir()` now creates a symlink
+  (`/opt/cultivlab/.env → /opt/cultivlab/repo/.env`) instead of copying the file, eliminating `.env`
+  drift between operator scripts and Docker Compose; new `restart_caddy()` step (6b/9) always runs
+  `docker compose restart caddy` after `compose_up` so Caddyfile changes apply immediately without
+  manual intervention
+- `scripts/provision-students.sh` — loads existing `cohort-students-${COHORT_NAME}.csv` on startup
+  and preserves recorded passwords for already-provisioned students on re-runs; was writing empty
+  string, destroying passwords; file is exactly 300 lines
+- `services/founder-console/app/actions.py` — `_ow_find_user_id()` renamed to `_ow_find_user()`, now
+  returns full user dict; `_ow_set_role()` sends complete `UserUpdateForm` payload (name, email,
+  profile_image_url, role) required by OW v0.5.20; fixes HTTP 422 on every pause/resume action
+- `infra/docker-compose.yml` — `open-webui` service env gains `WEBUI_NAME: ${WEBUI_NAME:-CultivLab}`
+- `.env.example` — added `WEBUI_NAME=CultivLab` in Open WebUI section
+- `docs/install.md` — §7 (Open WebUI setup) and §8 (cohort provisioning) filled in; were
+  placeholders since Sprint 3
+- `docs/PROJECT_BRIEF.md` — updated to v0.7.0
+- `docs/sprint-reports/sprint-7.md` — Sprint 7 completion report
+
+### Fixed
+
+- OW account suspend/resume in Founder Console: was sending `{"role": "pending"}` only → OW v0.5.20
+  returns HTTP 422; now sends all four required `UserUpdateForm` fields
+- `provision-students.sh`: re-runs no longer overwrite `owui_password` with empty string for
+  existing accounts; recorded password is preserved from the existing CSV
+
 ## [v0.6.0] — 2026-05-12 — Sprint 6 wrap
 
 ### Added

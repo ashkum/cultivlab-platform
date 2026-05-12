@@ -353,19 +353,139 @@ email or Slack a plaintext virtual key. If a key leaks, block it in the LiteLLM 
 
 ## 7. Open WebUI setup
 
-_Filled in Sprint 3._
+Pre-requisites: §5 bootstrap succeeded (LiteLLM healthy), §6 LiteLLM and provider config done.
 
-Connecting Open WebUI to LiteLLM, configuring the kid-mode system prompt, creating the first
-operator account, verifying student signup is disabled.
+### 7.1 Add DNS record for `chat.${DOMAIN}`
+
+At your registrar, add one A record (same VM IP as `api` and `admin`):
+
+| Type | Host   | Value              | TTL |
+| ---- | ------ | ------------------ | --- |
+| A    | `chat` | `<VM_EXTERNAL_IP>` | 300 |
+
+Verify before proceeding:
+
+```sh
+dig +short chat.${DOMAIN}   # must return the VM IP
+```
+
+### 7.2 Create the admin account (one-time, first signup only)
+
+The **first** account created at `https://chat.${DOMAIN}` is automatically promoted to admin. You
+must create it before disabling signup.
+
+1. Open `https://chat.${DOMAIN}` in a browser.
+2. Click **Sign up**, enter `OPENWEBUI_ADMIN_EMAIL` and a strong password of your choice.
+3. You are now logged in as admin — the interface shows a full admin panel.
+
+Set `OPENWEBUI_ADMIN_EMAIL` and `OPENWEBUI_ADMIN_PASSWORD` in `.env` to match the values you just
+used. These credentials are required by `provision-students.sh` and `reset-student-password.sh`.
+
+### 7.3 Disable student self-registration
+
+Once the admin account exists, prevent students from self-registering:
+
+In `.env`:
+
+```sh
+OPENWEBUI_ENABLE_SIGNUP=false
+```
+
+Restart Open WebUI on the VM to apply:
+
+```sh
+cd /opt/cultivlab/infra
+sudo docker compose --env-file /opt/cultivlab/.env up -d --force-recreate open-webui
+```
+
+Verify: open `https://chat.${DOMAIN}` in an incognito window — you should see only a **Sign in**
+form with no **Sign up** link.
+
+### 7.4 Verify the LiteLLM connection
+
+Log in as admin. The model selector should list the three configured models: `claude-sonnet-4-6`,
+`gpt-4o-mini`, `gemini-2.5-flash`.
+
+If no models appear:
+
+```sh
+# On the VM — check Open WebUI sees LiteLLM
+docker compose -f /opt/cultivlab/infra/docker-compose.yml logs open-webui --tail=50
+```
+
+Common cause: `OPENAI_API_KEYS` in the Open WebUI container does not match `LITELLM_MASTER_KEY`.
+Re-verify `.env` and force-recreate both services.
+
+### 7.5 Verify kid-mode system prompt
+
+In the Open WebUI admin panel → **Admin → Settings → General**, confirm the **System Prompt** field
+contains the value from `KID_MODE_SYSTEM_PROMPT` in `.env`. If it is blank, paste the value in and
+click **Save**.
+
+### 7.6 Verify branding
+
+The login page title and header should read **"Sign in to CultivLab"** (or whatever `WEBUI_NAME` is
+set to in `.env`), not "Sign in to Open WebUI". If it still shows "Open WebUI", confirm `WEBUI_NAME`
+is set in `.env` and that Open WebUI was force-recreated in §7.3.
 
 ---
 
 ## 8. Cohort provisioning
 
-_Filled in Sprint 3._
+Pre-requisites: §6.2 (`provision-cohort.sh`) complete — `cohort-keys-${COHORT_NAME}.csv` exists on
+your laptop. Open WebUI admin account created and credentials in `.env` (§7.2).
 
-Preparing `students.csv`, running `scripts/provision-cohort.sh --dry-run`, running it for real,
-verifying all 12 virtual keys and Open WebUI accounts exist.
+This section provisions Open WebUI accounts for each student and produces the `cohort-students` CSV
+that all subsequent operator scripts depend on.
+
+### 8.1 Run `provision-students.sh`
+
+```sh
+# Dry-run — prints intended OW account creates, makes no API calls
+bash scripts/provision-students.sh --dry-run
+
+# Live run — creates one OW account per student
+bash scripts/provision-students.sh
+```
+
+The live run writes `cohort-students-${COHORT_NAME}.csv` (mode `0600`) next to the `cohort-keys`
+CSV. Columns: `slug,owui_user_id,email,owui_password,litellm_key`.
+
+The script is idempotent: re-running detects existing accounts by email and skips creation,
+preserving the password recorded from the first run. Exit codes: `0` all rows succeeded, `1` setup
+failure, `2` partial success — re-run to retry failed rows.
+
+> **Keep `cohort-students-${COHORT_NAME}.csv` safe.** It contains plaintext student passwords. Back
+> it up alongside `cohort-keys-${COHORT_NAME}.csv` before distributing credentials.
+
+### 8.2 Generate onboarding cards
+
+```sh
+bash scripts/generate-cards.sh
+```
+
+Produces one printable PDF card per student with their chat URL, email, and password. Print and hand
+out in person — never email or Slack plaintext passwords.
+
+### 8.3 Verify a student can log in
+
+Using one row from `cohort-students-${COHORT_NAME}.csv`, test the end-to-end student flow:
+
+1. Open `https://chat.${DOMAIN}` in an incognito window.
+2. Sign in with the student's email and recorded password.
+3. Send a short message — confirm a model response arrives via LiteLLM.
+4. Log out.
+
+### 8.4 Reset a student password if needed
+
+```sh
+bash scripts/reset-student-password.sh \
+  --cohort "${COHORT_NAME}" \
+  --slug <student-slug>
+```
+
+Prints the new password to stdout and updates `cohort-students-${COHORT_NAME}.csv` automatically.
+Use `--password <value>` to supply a specific password instead of a random one.
 
 ---
 

@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 6 — v0.6.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 7 — v0.7.0
 
 ---
 
@@ -121,34 +121,42 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.6.0** — Sprint 6
+**v0.7.0** — Sprint 7 (pre-cohort hardening)
 
-Founder Console deployed at `founder.${DOMAIN}`. Operator can now manage the cohort from a browser
-(including on mobile) without SSH:
+Operational correctness pass before a real student cohort runs. No new features — all changes close
+gaps that would cause friction or silent failures on Day 1:
 
-- Student grid: slug, key status (active/paused), total spend vs budget (progress bar), 24h IDE
-  spend, 7d IDE spend, slot assignment, site live status
-- Cohort summary card: team spend vs budget, active/paused counts, chat aggregate 24h spend
-- Actions: pause/resume a student (blocks LiteLLM virtual key), pause/resume entire cohort, budget
-  top-up per student
-- Auth: bcrypt password form + itsdangerous signed cookie (8-hour session); IP-locked via Caddy
-- `provision-sites.sh` updated to write `/srv/students/<slot>/.student` slug manifest
-- CI: new workflow `ci-sprint55-founder-console.yml` validates Docker build + `/health` + auth gate
+- **`.env` symlink:** `/opt/cultivlab/.env → /opt/cultivlab/repo/.env` — one source of truth, ends
+  `.env` drift between operator scripts and Docker Compose
+- **Caddy auto-restart:** `bootstrap.sh` now always restarts Caddy after `compose up`, so Caddyfile
+  changes apply without manual intervention
+- **`scripts/reset-student-password.sh`** — operator can reset a student's Open WebUI password (OW
+  API primary, bcrypt+psql fallback); updates CSV on success
+- **`provision-students.sh` password preservation** — re-runs no longer overwrite recorded passwords
+  with empty strings
+- **OW suspend 422 fix** — Founder Console pause/resume now sends the full `UserUpdateForm` payload
+  (name, email, profile_image_url, role) that OW v0.5.20 requires; amber 422 warning is eliminated
+- **OW branding** — `WEBUI_NAME=CultivLab` wired into docker-compose.yml; chat login page shows
+  "Sign in to CultivLab"
+- **`docs/install.md` §7-8** — Open WebUI setup and cohort provisioning sections filled in (were
+  placeholders since Sprint 3)
+- **New runbooks:** `rotate-provider-key.md`, `continue-dev-smoke-test.md`
 
 ---
 
 ## Version history
 
-| Version | Sprint     | Date       | Summary                                                                                                   |
-| ------- | ---------- | ---------- | --------------------------------------------------------------------------------------------------------- |
-| v0.0.1  | Sprint 0   | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                                       |
-| v0.1.0  | Sprint 1   | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                            |
-| v0.2.0  | Sprint 2   | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6           |
-| v0.3.0  | Sprint 3   | 2026-05-10 | Open WebUI at chat.${DOMAIN}; provision-students.sh; kid-mode prompt; safety moderation; onboarding cards |
-| v0.4.0  | Sprint 4   | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                        |
-| v0.5.0  | Sprint 5   | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install              |
-| v0.5.5  | Sprint 5.5 | 2026-05-12 | Founder Console at founder.${DOMAIN}: student grid, pause/resume, topup, bcrypt auth, IP-locked           |
-| v0.6.0  | Sprint 6   | 2026-05-12 | Founder Console: OW account suspend (best-effort), dashboard auto-refresh (HX-Refresh) after all actions  |
+| Version | Sprint     | Date       | Summary                                                                                                                                    |
+| ------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| v0.0.1  | Sprint 0   | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                                                                        |
+| v0.1.0  | Sprint 1   | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                                                             |
+| v0.2.0  | Sprint 2   | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6                                            |
+| v0.3.0  | Sprint 3   | 2026-05-10 | Open WebUI at chat.${DOMAIN}; provision-students.sh; kid-mode prompt; safety moderation; onboarding cards                                  |
+| v0.4.0  | Sprint 4   | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                                                         |
+| v0.5.0  | Sprint 5   | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install                                               |
+| v0.5.5  | Sprint 5.5 | 2026-05-12 | Founder Console at founder.${DOMAIN}: student grid, pause/resume, topup, bcrypt auth, IP-locked                                            |
+| v0.6.0  | Sprint 6   | 2026-05-12 | Founder Console: OW account suspend (best-effort), dashboard auto-refresh (HX-Refresh) after all actions                                   |
+| v0.7.0  | Sprint 7   | 2026-05-12 | Pre-cohort hardening: .env symlink, Caddy auto-restart, reset-student-password.sh, OW suspend 422 fix, branding, install.md §7-8, runbooks |
 
 ---
 
@@ -158,18 +166,15 @@ None at Sprint 0. Issues are tracked in GitHub Issues.
 
 ---
 
-## Next up — Sprint 3
+## Next up — Sprint 8
 
-**Goal:** Open WebUI deployed at `chat.${DOMAIN}`, one student account per row in `students.csv`
-linked to that student's LiteLLM virtual key, kid-mode system prompt locked in, moderation pipeline
-wired to `#cultivlab-safety`. The platform shifts from "keys exist" to "kids can log in and chat".
+**Goal:** First real student cohort. Run the full operator playbook end-to-end, validate all
+instrumentation under live usage, and close any gaps discovered on Day 1.
 
-Sprint 3 deliverables (preview — formal task brief at sprint start):
+Likely Sprint 8 scope (TBD at sprint start based on cohort feedback):
 
-- Open WebUI service added to the Docker Compose stack at `chat.${DOMAIN}`
-- `scripts/provision-students.sh` — creates one Open WebUI account per student, links to the
-  per-student LiteLLM virtual key from Sprint 2's `cohort-keys-${COHORT_NAME}.csv`
-- Kid-mode default system prompt; `ENABLE_SIGNUP=false`; file upload + web search disabled
-- Moderation pipeline routing flagged content to `SLACK_WEBHOOK_SAFETY`
-- Onboarding card generator (PDF per student: chat URL + virtual key)
-- Sprint 3 sprint report
+- Live D6 validation: pause/resume a real student in Founder Console with a provisioned cohort
+- `docs/student-onboarding.md` — fill in all sections with screenshots and Continue.dev walk-through
+- `docs/install.md` §12 — pre-cohort hardening checklist (placeholder since Sprint 5)
+- Cohort Day 1 monitoring: watch Slack channels, LiteLLM admin UI, and Founder Console in real time
+- Post-cohort retrospective and BACKLOG triage
