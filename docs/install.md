@@ -378,12 +378,106 @@ each student subdomain, verifying HTTPS on student URLs.
 
 ---
 
-## 10. Founder Console setup
+## 10. Founder Console setup (Sprint 5.5)
 
-_Filled in Sprint 5.5._
+The Founder Console is a FastAPI + HTMX operator dashboard at `founder.${DOMAIN}`. It shows the
+student grid (spend, status, slot, site), cohort totals, and provides one-click pause/resume and
+budget top-up. IP-locked to `FOUNDER_ALLOWED_IP` via Caddy — same allowlist as `admin.${DOMAIN}`.
 
-Building the console container, configuring the bcrypt password, verifying the dashboard loads and
-all student actions work.
+### 10.1 Generate credentials (one-time, on your laptop)
+
+```sh
+# 1. bcrypt-hash a password of your choice
+python3 -c "import bcrypt; print(bcrypt.hashpw(b'your-chosen-password', bcrypt.gensalt()).decode())"
+# → $2b$12$...  (copy this output)
+
+# 2. Generate a cookie-signing secret
+openssl rand -hex 32
+# → abcdef123...  (copy this output)
+```
+
+Add both values to `.env`:
+
+```sh
+FOUNDER_CONSOLE_PASSWORD_HASH=$2b$12$...   # paste bcrypt output
+FOUNDER_CONSOLE_SECRET_KEY=abcdef123...    # paste openssl output
+```
+
+### 10.2 Add DNS A record for founder.${DOMAIN}
+
+At your registrar, add one more A record pointing at the VM IP:
+
+| Type | Host      | Value              | TTL |
+| ---- | --------- | ------------------ | --- |
+| A    | `founder` | `<VM_EXTERNAL_IP>` | 300 |
+
+Verify: `dig +short founder.${DOMAIN}` should return the VM IP.
+
+### 10.3 Build and deploy the container (on the VM)
+
+The Founder Console is built from source rather than pulled from a registry, so the image must be
+built on the VM before `docker compose up -d` can start it.
+
+```sh
+# On the VM, from the repo directory
+cd /opt/cultivlab-source
+
+# Pull any code changes if you haven't already
+sudo git pull
+
+# Copy updated .env to the live location
+sudo cp .env /opt/cultivlab/.env
+sudo chmod 600 /opt/cultivlab/.env
+
+# Build the founder-console image (first run: ~2 minutes)
+sudo docker compose -f infra/docker-compose.yml build founder-console
+
+# Start it (other services are already running — only founder-console starts)
+sudo docker compose -f infra/docker-compose.yml up -d founder-console
+
+# Re-render Caddyfile and reload Caddy to pick up the new founder.${DOMAIN} block
+sudo bash scripts/bootstrap.sh
+```
+
+`bootstrap.sh` re-renders `Caddyfile.tmpl` with the updated env, calls `docker compose up -d`
+(founder-console is already up, so Docker skips it), then restarts Caddy to pick up the new route.
+
+### 10.4 Verify the console is running
+
+```sh
+# On the VM: container should be Up and healthy within 20 s
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep founder-console
+
+# From your laptop (must be on your allowed IP):
+curl -fsSL https://founder.${DOMAIN}/health   # → {"status":"ok"}
+```
+
+Open `https://founder.${DOMAIN}` in a browser — you should see the login form. Log in with the
+password you bcrypt-hashed in §10.1.
+
+### 10.5 Verify the dashboard and actions
+
+After logging in:
+
+- The cohort summary card should show team spend and student counts (zeros before first activity).
+- The student grid should list all provisioned students with their LiteLLM key status.
+- Test pause: click **⛔ Pause** on one student → flash message confirms; LiteLLM key is blocked
+  within ~60 seconds (cache TTL).
+- Test resume: click **▶ Resume** → flash message confirms; key unblocked within ~60 seconds.
+- Test top-up: enter `1` in the $ field and click **+$** → flash message confirms; `max_budget`
+  increased by $1.00 in `LiteLLM_VerificationToken`.
+- Slot and site columns are populated after `provision-sites.sh` has run (Sprint 4 step).
+
+### 10.6 Verify IP lockout
+
+From a network that is **not** in `FOUNDER_ALLOWED_IP` (e.g. a phone hotspot):
+
+```sh
+curl -I https://founder.${DOMAIN}    # should return HTTP 403 Forbidden
+```
+
+If it returns 200, check that `FOUNDER_ALLOWED_IP` in `.env` is set to your specific CIDR (e.g.
+`1.2.3.4/32`) and not to `0.0.0.0/0`, then re-run `bootstrap.sh` to re-render the Caddyfile.
 
 ---
 

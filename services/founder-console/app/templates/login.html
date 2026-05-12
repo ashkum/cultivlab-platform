@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block header_right %}{% endblock %}
+
+{% block content %}
+<div class="lc">
+  <div class="card">
+    <h2 style="margin-top:0">Founder Console</h2>
+    {% if error %}<p class="err">{{ error }}</p>{% endif %}
+    <form method="post" action="/login">
+      <label style="display:block;margin-bottom:.5rem;font-size:.9rem">Password</label>
+      <input type="password" name="password" autofocus autocomplete="current-password" required>
+      <button type="submit" class="btn btn-success">Log in</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

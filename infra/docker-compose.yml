@@ -150,3 +150,29 @@ services:
       timeout: 5s
       retries: 6
       start_period: 60s
+
+  founder-console:
+    build:
+      context: ../services/founder-console
+      dockerfile: Dockerfile
+    image: cultivlab-founder-console:${FOUNDER_CONSOLE_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      FOUNDER_CONSOLE_PASSWORD_HASH: ${FOUNDER_CONSOLE_PASSWORD_HASH}
+      FOUNDER_CONSOLE_SECRET_KEY: ${FOUNDER_CONSOLE_SECRET_KEY}
+      COHORT_NAME: ${COHORT_NAME}
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - /srv/students:/srv/students:ro
+    networks:
+      - cultivlab-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s

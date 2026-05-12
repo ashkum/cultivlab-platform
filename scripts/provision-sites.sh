@@ -202,7 +202,7 @@ done
 log info "step 4/6: rendering + uploading templates"
 
 if [[ "$DRY_RUN" == "true" ]]; then
-  log info "DRY RUN — skipping template render + scp; no remote changes"
+  log info "DRY RUN — skipping template render + scp + .student manifest; no remote changes"
 else
   render_dir="$(mktemp -d)"
   trap 'rm -rf "$render_dir" "$TEMP_OUTPUT"' EXIT
@@ -244,6 +244,17 @@ else
       "$VM_NAME" \
       --command="sudo mkdir -p /srv/students/$slot && sudo cp /tmp/$slot/*.html /tmp/$slot/*.md /srv/students/$slot/ && sudo rm -rf /tmp/$slot" </dev/null >/dev/null 2>&1 || {
       log error "  ssh+sudo-copy failed for $slot"
+      exit 2
+    }
+
+    # Write slug manifest for Founder Console slot lookup (ADR-008 / Sprint 5.5)
+    gcloud compute ssh \
+      --tunnel-through-iap \
+      --zone="$GCP_ZONE" \
+      --project="$GCP_PROJECT_ID" \
+      "$VM_NAME" \
+      --command="printf '%s' '${slug}' | sudo tee /srv/students/$slot/.student > /dev/null" </dev/null >/dev/null 2>&1 || {
+      log error "  .student manifest write failed for $slot"
       exit 2
     }
 

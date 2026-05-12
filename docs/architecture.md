@@ -1,8 +1,8 @@
 # CultivLab — Architecture
 
-**Current state: Sprint 5 — operational hygiene layer complete (daily reports, weekly cap
-enforcement, GCS backups, cron monitoring).** Update this document every sprint as new components
-are added.
+**Current state: Sprint 5.5 — Founder Console deployed at `founder.${DOMAIN}` (FastAPI + HTMX,
+IP-locked, student grid with pause/resume/topup).** Update this document every sprint as new
+components are added.
 
 ---
 
@@ -133,7 +133,7 @@ Open WebUI, Founder Console, and Firebase Hosting are not yet deployed — those
 | Open WebUI            | Student-facing chat interface                                                                                         | Sprint 3                              | Live ✅ (v0.3.0) at chat.${DOMAIN}                       |
 | Cron monitoring layer | Three root cron jobs: daily Slack report, weekly cap enforcer, nightly GCS backup + rotation                          | Sprint 5                              | **Built** (`/etc/cron.d/cultivlab-ops`)                  |
 | GCS backup bucket     | Tiered Postgres backup storage (daily 30d, weekly 90d, monthly 365d) with SHA-256 verification                        | Sprint 5                              | **Built** (bucket created at deploy time)                |
-| Founder Console       | Operator command center (FastAPI + HTMX)                                                                              | Sprint 5.5                            | Not built                                                |
+| Founder Console       | Operator command center (FastAPI + HTMX) at `founder.${DOMAIN}`; student grid, pause/resume, topup; IP-locked         | Sprint 5.5                            | **Built** (`services/founder-console/`)                  |
 | Firebase Hosting      | Student static site hosting                                                                                           | Sprint 4                              | Not built                                                |
 | Langfuse              | Observability, tracing, evals                                                                                         | Sprint 4                              | Not built                                                |
 | pgvector              | Vector storage for RAG                                                                                                | Sprint 4                              | Not built                                                |

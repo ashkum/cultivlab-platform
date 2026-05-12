@@ -9,6 +9,49 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.5.5] — 2026-05-12 — Sprint 5.5 wrap
+
+### Added
+
+- `services/founder-console/` — FastAPI + HTMX operator dashboard at `founder.${DOMAIN}`; bcrypt
+  password form + itsdangerous signed cookie (8-hour session); IP-locked via Caddy
+- `services/founder-console/app/main.py` — app entry, `/health`, `/login`, `/logout`
+- `services/founder-console/app/auth.py` — bcrypt password verify, cookie sign/verify
+- `services/founder-console/app/db.py` — read queries: student grid, cohort summary, slot manifest
+  (`/srv/students/*/.student`), site-live check
+- `services/founder-console/app/actions.py` — Postgres writes: block/unblock key, topup
+  `max_budget`, cohort-wide block/unblock (direct UPDATE; plaintext key not needed)
+- `services/founder-console/app/routes/dashboard.py` — `GET /` (student grid + cohort summary)
+- `services/founder-console/app/routes/student.py` — `POST /students/{slug}/pause|resume|topup`,
+  `POST /cohort/pause|resume`; responses are HTMX HTML fragments swapped into `#flash`
+- `services/founder-console/app/templates/` — `base.html`, `login.html`, `dashboard.html`;
+  mobile-friendly system-font CSS; budget progress bars (green → amber 70% → red 90%); confirm
+  dialogs on destructive actions
+- `services/founder-console/Dockerfile` — `python:3.12-slim`, uvicorn ASGI entrypoint
+- `services/founder-console/requirements.txt` — 7 pinned packages: fastapi, uvicorn, jinja2,
+  python-multipart, psycopg2-binary, bcrypt, itsdangerous
+- `.github/workflows/ci-sprint55-founder-console.yml` — Docker build + `/health` JSON check +
+  `/login` 200 + `/` → 302 redirect; no live Postgres or Cloud SDK needed
+- New env var in `.env.example`: `FOUNDER_CONSOLE_SECRET_KEY`
+
+### Changed
+
+- `infra/docker-compose.yml` — added `founder-console` service (builds from source; mounts
+  `/srv/students:ro`; depends on `postgres` healthy; health check on `/health`)
+- `infra/Caddyfile.tmpl` — added `founder.${DOMAIN}` block with `@allowed remote_ip` allowlist;
+  header comment updated to "Five route patterns"
+- `scripts/provision-sites.sh` — added `gcloud compute ssh` call per slot to write
+  `/srv/students/<slot>/.student` slug manifest (Founder Console slot lookup)
+- `docs/install.md` — §10 filled in (credentials, DNS, build/deploy, verify dashboard + actions)
+- `docs/architecture.md` — Founder Console status updated to "Built"; header updated to Sprint 5.5
+- `docs/PROJECT_BRIEF.md` — version updated to v0.5.5; version history row added
+
+### Deferred to BACKLOG
+
+- Open WebUI account suspend via Founder Console — OW v0.5.20 admin API for disabling users is
+  unverified (known UI quirk per BACKLOG). Pause currently blocks the LiteLLM virtual key only (cuts
+  IDE/Continue.dev). Chat suspend requires manual action via `admin.${DOMAIN}/ui`. Sprint 6.
+
 ## [v0.5.0] — 2026-05-12 — Sprint 5 wrap
 
 ### Added

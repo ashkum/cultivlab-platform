@@ -2,13 +2,15 @@
 # Rendered to infra/Caddyfile by scripts/bootstrap.sh via envsubst.
 # DO NOT edit the rendered file (it is gitignored); edit this template.
 #
-# Four route patterns:
-#   api.${DOMAIN}    — public LiteLLM API. Auto-HTTPS, HTTP→HTTPS redirect.
-#   admin.${DOMAIN}  — LiteLLM admin UI. Auto-HTTPS. IP-locked. 403 from any
-#                       address not in ${FOUNDER_ALLOWED_IP}.
-#   chat.${DOMAIN}   — Open WebUI student chat surface. Auto-HTTPS, public.
-#   l##.${DOMAIN}    — Student site slots (Sprint 4). Static files from
-#                       /srv/students/<slot>/. Auto-HTTPS, public. See ADR-013.
+# Five route patterns:
+#   api.${DOMAIN}     — public LiteLLM API. Auto-HTTPS, HTTP→HTTPS redirect.
+#   admin.${DOMAIN}   — LiteLLM admin UI. Auto-HTTPS. IP-locked. 403 from any
+#                        address not in ${FOUNDER_ALLOWED_IP}.
+#   chat.${DOMAIN}    — Open WebUI student chat surface. Auto-HTTPS, public.
+#   founder.${DOMAIN} — Founder Console (FastAPI+HTMX). Auto-HTTPS. IP-locked.
+#                        Same ${FOUNDER_ALLOWED_IP} allowlist as admin.
+#   l##.${DOMAIN}     — Student site slots (Sprint 4). Static files from
+#                        /srv/students/<slot>/. Auto-HTTPS, public. See ADR-013.
 #
 # Caddy v2 supports multiple CIDRs in `remote_ip` separated by spaces.
 # bootstrap.sh normalizes commas in ${FOUNDER_ALLOWED_IP} to spaces before
@@ -41,6 +43,18 @@ admin.${DOMAIN} {
 chat.${DOMAIN} {
 	encode zstd gzip
 	reverse_proxy open-webui:8080
+}
+
+founder.${DOMAIN} {
+	encode zstd gzip
+
+	@allowed remote_ip ${FOUNDER_ALLOWED_IP}
+	handle @allowed {
+		reverse_proxy founder-console:8080
+	}
+	handle {
+		respond "Forbidden" 403
+	}
 }
 
 # Student site slots (Sprint 4) — slot-based subdomains for cohort use.

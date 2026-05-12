@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 5 — v0.5.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 5.5 — v0.5.5
 
 ---
 
@@ -121,34 +121,33 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.5.0** — Sprint 5
+**v0.5.5** — Sprint 5.5
 
-Operational hygiene layer deployed. Three root cron jobs run nightly:
+Founder Console deployed at `founder.${DOMAIN}`. Operator can now manage the cohort from a browser
+(including on mobile) without SSH:
 
-- `daily-summary.sh` (23:00 UTC) — posts cohort + per-student spend and request counts to
-  `#cultivlab-reports`
-- `weekly-cap-enforcer.sh` (23:30 UTC) — enforces 7-day rolling budget; blocks over-limit student
-  keys via direct Postgres UPDATE; alerts `#cultivlab-budget`
-- `backup-postgres.sh` (02:00 UTC) — pg_dump → gzip → GCS with three retention tiers (30d daily /
-  90d weekly / 365d monthly); SHA-256 sidecars; success/failure to `#cultivlab-platform`
-
-New scripts: `restore-postgres.sh` (two-phase restore: sanity temp DB, optional production replace
-with confirmation prompt), `install-crontab.sh` (idempotent cron + logrotate installer). New
-runbooks: `docs/runbooks/backup-restore.md`, `docs/runbooks/cohort-health-check.md`. Platform is now
-production-ready to run a real student cohort.
+- Student grid: slug, key status (active/paused), total spend vs budget (progress bar), 24h IDE
+  spend, 7d IDE spend, slot assignment, site live status
+- Cohort summary card: team spend vs budget, active/paused counts, chat aggregate 24h spend
+- Actions: pause/resume a student (blocks LiteLLM virtual key), pause/resume entire cohort, budget
+  top-up per student
+- Auth: bcrypt password form + itsdangerous signed cookie (8-hour session); IP-locked via Caddy
+- `provision-sites.sh` updated to write `/srv/students/<slot>/.student` slug manifest
+- CI: new workflow `ci-sprint55-founder-console.yml` validates Docker build + `/health` + auth gate
 
 ---
 
 ## Version history
 
-| Version | Sprint   | Date       | Summary                                                                                                   |
-| ------- | -------- | ---------- | --------------------------------------------------------------------------------------------------------- |
-| v0.0.1  | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                                       |
-| v0.1.0  | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                            |
-| v0.2.0  | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6           |
-| v0.3.0  | Sprint 3 | 2026-05-10 | Open WebUI at chat.${DOMAIN}; provision-students.sh; kid-mode prompt; safety moderation; onboarding cards |
-| v0.4.0  | Sprint 4 | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                        |
-| v0.5.0  | Sprint 5 | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install              |
+| Version | Sprint     | Date       | Summary                                                                                                   |
+| ------- | ---------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| v0.0.1  | Sprint 0   | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                                       |
+| v0.1.0  | Sprint 1   | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                            |
+| v0.2.0  | Sprint 2   | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6           |
+| v0.3.0  | Sprint 3   | 2026-05-10 | Open WebUI at chat.${DOMAIN}; provision-students.sh; kid-mode prompt; safety moderation; onboarding cards |
+| v0.4.0  | Sprint 4   | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                        |
+| v0.5.0  | Sprint 5   | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install              |
+| v0.5.5  | Sprint 5.5 | 2026-05-12 | Founder Console at founder.${DOMAIN}: student grid, pause/resume, topup, bcrypt auth, IP-locked           |
 
 ---
 

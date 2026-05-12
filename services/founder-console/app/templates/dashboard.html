@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ cohort_name }}</h2>
+
+{# ── DB error banner ─────────────────────────────────────────────────────── #}
+{% if error %}
+<div class="card" style="border-color:#e63946;color:#9b2226">
+  <strong>Database error:</strong> {{ error }}
+</div>
+
+{# ── Main dashboard ───────────────────────────────────────────────────────── #}
+{% elif summary %}
+
+{# Cohort summary card #}
+<div class="card">
+  <div class="sg">
+    <div class="stat">
+      {% set tpct = (summary.team_spend / summary.team_max_budget * 100) if summary.team_max_budget > 0 else 0 %}
+      <div class="sv">${{ "%.2f"|format(summary.team_spend) }}</div>
+      <div class="sl">Team spend / ${{ "%.0f"|format(summary.team_max_budget) }}</div>
+      <div class="pb"><div class="pbf {% if tpct > 90 %}danger{% elif tpct > 70 %}warn{% endif %}"
+           style="width:{{ [tpct, 100.0]|min|round }}%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="sv">{{ summary.student_count - summary.blocked_count }}</div>
+      <div class="sl">Active</div>
+    </div>
+    <div class="stat">
+      <div class="sv">{{ summary.blocked_count }}</div>
+      <div class="sl">Paused</div>
+    </div>
+    <div class="stat">
+      <div class="sv">${{ "%.2f"|format(summary.chat_spend_24h) }}</div>
+      <div class="sl">Chat 24h ({{ summary.chat_requests_24h }} req)</div>
+    </div>
+  </div>
+  <div class="ca">
+    <button class="btn btn-danger"
+            hx-post="/cohort/pause" hx-target="#flash" hx-swap="outerHTML"
+            onclick="return confirm('Pause ALL students in {{ cohort_name }}?')">
+      ⛔ Pause cohort
+    </button>
+    <button class="btn btn-success"
+            hx-post="/cohort/resume" hx-target="#flash" hx-swap="outerHTML"
+            onclick="return confirm('Resume ALL students in {{ cohort_name }}?')">
+      ▶ Resume cohort
+    </button>
+  </div>
+</div>
+
+{# Student grid #}
+<div class="card">
+  <div class="ovf">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Budget</th>
+          <th>24 h</th>
+          <th>7 d</th>
+          <th>Slot</th>
+          <th>Site</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in students %}
+        <tr>
+          <td><code>{{ s.slug }}</code></td>
+          <td>
+            {% if s.blocked %}
+              <span class="badge blk">paused</span>
+            {% else %}
+              <span class="badge ok">active</span>
+            {% endif %}
+          </td>
+          <td>${{ "%.3f"|format(s.total_spend) }}</td>
+          <td>
+            {% set bpct = (s.total_spend / s.max_budget * 100) if s.max_budget > 0 else 0 %}
+            ${{ "%.2f"|format(s.max_budget) }}
+            <div class="pb" style="width:80px">
+              <div class="pbf {% if bpct > 90 %}danger{% elif bpct > 70 %}warn{% endif %}"
+                   style="width:{{ [bpct, 100.0]|min|round }}%"></div>
+            </div>
+          </td>
+          <td>${{ "%.3f"|format(s.spend_24h) }}</td>
+          <td>${{ "%.3f"|format(s.spend_7d) }}</td>
+          <td>{{ s.slot or "—" }}</td>
+          <td>
+            {% if s.slot %}
+              {% if s.site_live %}
+                <a href="https://{{ s.slot }}.{{ domain }}" target="_blank"
+                   class="badge ok">live ↗</a>
+              {% else %}
+                <span class="badge dim">not deployed</span>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td style="white-space:nowrap">
+            {% if s.blocked %}
+              <button class="btn btn-success btn-sm"
+                      hx-post="/students/{{ s.slug }}/resume"
+                      hx-target="#flash" hx-swap="outerHTML">▶ Resume</button>
+            {% else %}
+              <button class="btn btn-danger btn-sm"
+                      hx-post="/students/{{ s.slug }}/pause"
+                      hx-target="#flash" hx-swap="outerHTML"
+                      onclick="return confirm('Pause {{ s.slug }}?')">⛔ Pause</button>
+            {% endif %}
+            <form class="topup"
+                  hx-post="/students/{{ s.slug }}/topup"
+                  hx-target="#flash" hx-swap="outerHTML">
+              <input type="number" name="amount" value="5" min="1" max="50" step="1">
+              <button type="submit" class="btn btn-accent btn-sm">+$</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="9" style="text-align:center;color:#6c757d;padding:2rem">
+            No students found for cohort <code>{{ cohort_name }}</code>.<br>
+            Run <code>provision-cohort.sh</code> first.
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="card">No cohort data found. Is <code>COHORT_NAME</code> set correctly?</div>
+{% endif %}
+
+<p class="note">
+  Pause blocks IDE access (LiteLLM key). Chat access: disable account via
+  <a href="https://admin.{{ domain }}/ui" target="_blank">admin.{{ domain }}</a>.
+  Refresh the page to see current state after an action.
+</p>
+{% endblock %}

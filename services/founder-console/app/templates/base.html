@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CultivLab Founder Console</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"
+          integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2uodhDgEMeXPnkw8P7HhMVkPbXA4HoCkTz"
+          crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body  { font-family: system-ui, sans-serif; margin: 0; background: #f8f9fa; color: #212529; }
+    header { background: #1a1a2e; color: #eee; padding: .75rem 1rem;
+             display: flex; justify-content: space-between; align-items: center; }
+    header a { color: #90e0ef; text-decoration: none; font-size: .9rem; }
+    main  { padding: 1rem; max-width: 1100px; margin: 0 auto; }
+    h2    { margin: .5rem 0 1rem; font-size: 1.2rem; color: #343a40; }
+    #flash { min-height: 1.4rem; margin: .5rem 0; font-size: .9rem; }
+    .card { background: #fff; border: 1px solid #dee2e6; border-radius: .5rem;
+            padding: 1rem; margin-bottom: 1rem; }
+    /* Summary grid */
+    .sg   { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+            gap: .75rem; margin-bottom: .75rem; }
+    .stat { text-align: center; }
+    .sv   { font-size: 1.5rem; font-weight: 700; }
+    .sl   { font-size: .75rem; color: #6c757d; margin-top: .1rem; }
+    /* Progress bar */
+    .pb   { height: .45rem; background: #dee2e6; border-radius: 1rem; overflow: hidden; margin-top: .3rem; }
+    .pbf  { height: 100%; background: #2d6a4f; border-radius: 1rem; transition: width .3s; }
+    .pbf.warn   { background: #e9c46a; }
+    .pbf.danger { background: #e63946; }
+    /* Cohort actions row */
+    .ca   { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+    /* Table */
+    .ovf  { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th    { text-align: left; padding: .5rem .4rem; border-bottom: 2px solid #dee2e6;
+            white-space: nowrap; color: #495057; }
+    td    { padding: .4rem .4rem; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+    tr:hover td { background: #f8f9fa; }
+    code  { background: #f1f3f5; padding: .1em .3em; border-radius: .2em; font-size: .85em; }
+    /* Badges */
+    .badge { display: inline-block; padding: .2em .5em; border-radius: .25em;
+             font-size: .8em; font-weight: 600; }
+    .ok   { background: #d8f3dc; color: #1b4332; }
+    .blk  { background: #ffe8e8; color: #9b2226; }
+    .dim  { background: #f1f3f5; color: #6c757d; }
+    /* Buttons */
+    .btn  { cursor: pointer; border: none; border-radius: .25rem;
+            padding: .3rem .65rem; font-size: .8rem; font-weight: 600; }
+    .btn-danger  { background: #e63946; color: #fff; }
+    .btn-success { background: #2d6a4f; color: #fff; }
+    .btn-accent  { background: #457b9d; color: #fff; }
+    .btn-sm { padding: .2rem .45rem; font-size: .75rem; }
+    /* Topup form inline */
+    .topup { display: inline-flex; gap: .25rem; align-items: center; }
+    .topup input { width: 4rem; padding: .2rem .3rem; border: 1px solid #ced4da;
+                   border-radius: .25rem; font-size: .8rem; }
+    /* Login card */
+    .lc   { max-width: 340px; margin: 4rem auto; }
+    .lc input[type=password] { width: 100%; padding: .5rem; border: 1px solid #ced4da;
+                                border-radius: .25rem; font-size: 1rem; margin-bottom: .75rem; }
+    .lc .btn { width: 100%; padding: .5rem; font-size: 1rem; }
+    .err  { color: #9b2226; margin-bottom: .5rem; font-size: .9rem; }
+    .note { font-size: .75rem; color: #adb5bd; margin-top: 1rem; }
+    .note a { color: #adb5bd; }
+    @media (max-width: 640px) { .sv { font-size: 1.1rem; } }
+  </style>
+</head>
+<body>
+<header>
+  <strong>🌱 CultivLab Founder Console</strong>
+  {% block header_right %}<a href="/logout">Log out</a>{% endblock %}
+</header>
+<main>
+  <div id="flash"></div>
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
