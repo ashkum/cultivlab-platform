@@ -9,6 +9,63 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.5.0] — 2026-05-12 — Sprint 5 wrap
+
+### Added
+
+- `scripts/daily-summary.sh` — daily Slack report posting cohort cumulative spend + per-student 24h
+  IDE activity (via virtual keys) + chat activity aggregate (via Open WebUI UUID) to
+  `#cultivlab-reports`; idempotency sentinel at `/var/log/cultivlab/`; `--dry-run` / `--force`
+- `scripts/weekly-cap-enforcer.sh` — enforces 7-day rolling budget per student; blocks over-limit
+  keys via direct Postgres UPDATE on `LiteLLM_VerificationToken`; alerts `#cultivlab-budget`;
+  idempotent (already-blocked keys skipped); `--dry-run`
+- `scripts/backup-postgres.sh` — nightly pg_dump → gzip → GCS; SHA-256 sidecar upload; three
+  retention tiers (daily 30d, weekly 90d, monthly 365d); rotation on every run; EXIT trap posts
+  failure to `#cultivlab-platform`; `--dry-run` / `--force`; idempotency via `gsutil stat`
+- `scripts/restore-postgres.sh` — Phase 1 (download, checksum verify, temp DB sanity, drop) + Phase
+  2 (`--force`: stop services, drop/recreate prod DB, restore, restart); `read -r < /dev/tty`
+  confirmation requiring `"RESTORE"`; `--dry-run`
+- `scripts/install-crontab.sh` — idempotent installer; writes `/etc/cron.d/cultivlab-ops` (23:00,
+  23:30, 02:00 UTC, PATH includes `/snap/bin`) + `/etc/logrotate.d/cultivlab-ops` (14-day
+  retention); verifies scripts exist; checks cron daemon active; `--dry-run`
+- `.github/workflows/ci-sprint5-scripts.yml` — CI dry-run coverage for all five Sprint 5 scripts
+  (separate workflow to stay under 300-line per-file limit)
+- `docs/runbooks/backup-restore.md` — backup overview, Phase 1 and Phase 2 restore procedures,
+  pre-restore checklist, post-restore verification, troubleshooting table
+- `docs/runbooks/cohort-health-check.md` — automated check overview, manual full-stack check (9
+  steps), pre-cohort checklist, during-cohort daily scan, manual student unblock procedure
+- `docs/install.md §11` — cron monitoring setup: GCS bucket creation, `install-crontab.sh` usage,
+  per-script manual verification, Phase 1 restore sanity test
+- `docs/sprint-reports/sprint-5.md` — Sprint 5 completion report
+- New env vars in `.env.example`: `POSTGRES_CONTAINER`, `LITELLM_CONTAINER`, `OPENWEBUI_CONTAINER`,
+  `GCS_BACKUP_BUCKET`
+
+### Changed
+
+- `.env.example` — removed duplicate `LITELLM_ADMIN_URL=` entries (BACKLOG fix); added Sprint 5 cron
+  section with 4 new env vars
+- `docs/architecture.md` — current state updated to Sprint 5; cron monitoring layer and GCS backup
+  bucket added to component inventory
+- `docs/PROJECT_BRIEF.md` — version updated to Sprint 5 / v0.5.0; version history filled in for all
+  sprints; current version description rewritten for v0.5.0
+- `docs/install.md` — §11 renamed to §12 (pre-cohort hardening); new §11 added (cron setup)
+
+### Fixed
+
+- `scripts/backup-postgres.sh` / `scripts/restore-postgres.sh` EXIT trap: replaced bare `[[ ]]` with
+  `if/then` guard to prevent false-conditional exit code bleed under `set -e`
+- `scripts/daily-summary.sh` dry-run: `mkdir -p "$LOG_DIR"` now guarded to live-mode only
+
+### Verified
+
+- All five Sprint 5 scripts pass `bash -n` syntax check
+- All five scripts exit 0 on `--dry-run` in CI sandbox
+- `backup-postgres.sh` correctly activates weekly and monthly upload tiers (simulated Sunday + 1st)
+- `weekly-cap-enforcer.sh` correctly classifies over-budget, already-blocked, and under-budget keys
+- `restore-postgres.sh` Phase 1 + Phase 2 dry-run output verified
+- `install-crontab.sh` correctly embeds SCRIPT_DIR, verifies script executability, prints cron +
+  logrotate files
+
 ## [v0.4.0] — 2026-05-11 — Sprint 4 wrap
 
 ### Added

@@ -1,0 +1,107 @@
+name: CI — Sprint 5 operational scripts
+
+# Validates dry-run code paths for the four Sprint 5 scripts:
+#   daily-summary.sh, weekly-cap-enforcer.sh, backup-postgres.sh,
+#   restore-postgres.sh, install-crontab.sh
+#
+# All steps use stub env vars and --dry-run. No Docker, no GCS, no Slack calls
+# are made. Tool checks for jq/gsutil are guarded to live-mode in the scripts.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/daily-summary.sh"
+      - "scripts/weekly-cap-enforcer.sh"
+      - "scripts/backup-postgres.sh"
+      - "scripts/restore-postgres.sh"
+      - "scripts/install-crontab.sh"
+      - ".github/workflows/ci-sprint5-scripts.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/daily-summary.sh"
+      - "scripts/weekly-cap-enforcer.sh"
+      - "scripts/backup-postgres.sh"
+      - "scripts/restore-postgres.sh"
+      - "scripts/install-crontab.sh"
+      - ".github/workflows/ci-sprint5-scripts.yml"
+
+jobs:
+  sprint5-scripts:
+    name: Sprint 5 script dry-runs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq (required by daily-summary + weekly-cap-enforcer)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      # ── daily-summary.sh ──────────────────────────────────────────────────
+      # Dry-run uses stub SQL data; no docker exec, no Slack post.
+      - name: daily-summary.sh --dry-run (Sprint 5)
+        run: |
+          set -euo pipefail
+          export POSTGRES_USER=cultivlab
+          export POSTGRES_DB=cultivlab
+          export POSTGRES_PASSWORD=ci-stub-password
+          export SLACK_WEBHOOK_REPORTS=https://hooks.slack.com/services/ci/reports
+          export COHORT_NAME=ci-cohort
+          export COHORT_MAX_BUDGET=200.00
+          ./scripts/daily-summary.sh --dry-run
+          echo "✓ daily-summary.sh --dry-run passed"
+
+      # ── weekly-cap-enforcer.sh ────────────────────────────────────────────
+      # Dry-run uses stub student data; no DB writes, no Slack post.
+      - name: weekly-cap-enforcer.sh --dry-run (Sprint 5)
+        run: |
+          set -euo pipefail
+          export POSTGRES_USER=cultivlab
+          export POSTGRES_DB=cultivlab
+          export POSTGRES_PASSWORD=ci-stub-password
+          export SLACK_WEBHOOK_BUDGET=https://hooks.slack.com/services/ci/budget
+          export COHORT_NAME=ci-cohort
+          export STUDENT_WEEKLY_BUDGET=8.00
+          ./scripts/weekly-cap-enforcer.sh --dry-run
+          echo "✓ weekly-cap-enforcer.sh --dry-run passed"
+
+      # ── backup-postgres.sh ────────────────────────────────────────────────
+      # jq + gsutil tool checks are guarded to live-mode; dry-run passes without
+      # Cloud SDK installed on the runner.
+      - name: backup-postgres.sh --dry-run (Sprint 5)
+        run: |
+          set -euo pipefail
+          export POSTGRES_USER=cultivlab
+          export POSTGRES_DB=cultivlab
+          export POSTGRES_PASSWORD=ci-stub-password
+          export GCS_BACKUP_BUCKET=ci-stub-backups
+          export SLACK_WEBHOOK_PLATFORM=https://hooks.slack.com/services/ci/platform
+          ./scripts/backup-postgres.sh --dry-run
+          echo "✓ backup-postgres.sh --dry-run passed"
+
+      # ── restore-postgres.sh ───────────────────────────────────────────────
+      # Two dry-run passes: phase 1 only, and phase 1 + phase 2 (--force).
+      # Neither downloads from GCS nor touches any database.
+      - name: restore-postgres.sh --dry-run (Sprint 5)
+        run: |
+          set -euo pipefail
+          export POSTGRES_USER=cultivlab
+          export POSTGRES_DB=cultivlab
+          export POSTGRES_PASSWORD=ci-stub-password
+          export GCS_BACKUP_BUCKET=ci-stub-backups
+          ./scripts/restore-postgres.sh \
+            gs://ci-stub-backups/daily/cultivlab-2026-01-01.sql.gz --dry-run
+          ./scripts/restore-postgres.sh \
+            gs://ci-stub-backups/daily/cultivlab-2026-01-01.sql.gz --dry-run --force
+          echo "✓ restore-postgres.sh --dry-run passed (phase-1 and phase-2 paths)"
+
+      # ── install-crontab.sh ────────────────────────────────────────────────
+      # Dry-run skips the root check; verifies all three scripts exist.
+      - name: install-crontab.sh --dry-run (Sprint 5)
+        run: |
+          set -euo pipefail
+          ./scripts/install-crontab.sh --dry-run
+          echo "✓ install-crontab.sh --dry-run passed"

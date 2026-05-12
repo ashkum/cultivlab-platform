@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 4 — v0.4.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 5 — v0.5.0
 
 ---
 
@@ -121,23 +121,34 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.2.0** — Sprint 2
+**v0.5.0** — Sprint 5
 
-Cohort provisioning deployed: `scripts/provision-cohort.sh` reads `students.csv` and creates one
-LiteLLM team carrying `COHORT_MAX_BUDGET` plus one virtual key per student carrying per-student caps
-and rate limits. Plaintext keys land in `cohort-keys-${COHORT_NAME}.csv` (mode 0600, gitignored).
-Provider master-caps documented per-provider; Slack alert wiring smoke-tested across all five
-channels. No Open WebUI, no students logging in yet — Sprint 3.
+Operational hygiene layer deployed. Three root cron jobs run nightly:
+
+- `daily-summary.sh` (23:00 UTC) — posts cohort + per-student spend and request counts to
+  `#cultivlab-reports`
+- `weekly-cap-enforcer.sh` (23:30 UTC) — enforces 7-day rolling budget; blocks over-limit student
+  keys via direct Postgres UPDATE; alerts `#cultivlab-budget`
+- `backup-postgres.sh` (02:00 UTC) — pg_dump → gzip → GCS with three retention tiers (30d daily /
+  90d weekly / 365d monthly); SHA-256 sidecars; success/failure to `#cultivlab-platform`
+
+New scripts: `restore-postgres.sh` (two-phase restore: sanity temp DB, optional production replace
+with confirmation prompt), `install-crontab.sh` (idempotent cron + logrotate installer). New
+runbooks: `docs/runbooks/backup-restore.md`, `docs/runbooks/cohort-health-check.md`. Platform is now
+production-ready to run a real student cohort.
 
 ---
 
 ## Version history
 
-| Version | Sprint   | Date       | Summary                                                                                         |
-| ------- | -------- | ---------- | ----------------------------------------------------------------------------------------------- |
-| v0.0.1  | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                             |
-| v0.1.0  | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                  |
-| v0.2.0  | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6 |
+| Version | Sprint   | Date       | Summary                                                                                                   |
+| ------- | -------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| v0.0.1  | Sprint 0 | 2026-05-08 | Repository scaffold, all docs, 10 ADRs, CI baseline                                                       |
+| v0.1.0  | Sprint 1 | 2026-05-09 | GCP VM + Caddy + LiteLLM + Postgres deployed; api.${DOMAIN}/health returns 200                            |
+| v0.2.0  | Sprint 2 | 2026-05-09 | provision-cohort.sh + LiteLLM cohort team + per-student keys + Slack smoke test + install.md §6           |
+| v0.3.0  | Sprint 3 | 2026-05-10 | Open WebUI at chat.${DOMAIN}; provision-students.sh; kid-mode prompt; safety moderation; onboarding cards |
+| v0.4.0  | Sprint 4 | 2026-05-11 | Slot-based student sites (l01–l06); provision-sites.sh; generate-cards.sh; ADR-013                        |
+| v0.5.0  | Sprint 5 | 2026-05-12 | Daily reports; weekly cap enforcer; GCS backups with rotation; restore runbook; cron install              |
 
 ---
 

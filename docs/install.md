@@ -387,7 +387,114 @@ all student actions work.
 
 ---
 
-## 11. Pre-cohort hardening checklist
+## 11. Cron monitoring setup (Sprint 5)
+
+Three scripts run as root cron jobs on the VM. Run all steps below on the VM (not your laptop).
+
+### 11.1 Prerequisites on the VM
+
+```sh
+# jq — required by daily-summary and weekly-cap-enforcer
+sudo apt-get install -y jq
+
+# gsutil — required by backup-postgres; already present on GCP Ubuntu 24.04 via Cloud SDK snap.
+# Verify:
+gsutil version
+```
+
+### 11.2 Create the GCS backup bucket (one-time)
+
+```sh
+# Source env to pick up GCS_BACKUP_BUCKET and GCP_PROJECT_ID
+source /opt/cultivlab/.env
+
+gsutil mb -p "${GCP_PROJECT_ID}" -l us-central1 "gs://${GCS_BACKUP_BUCKET}"
+
+# Grant the VM's service account write access
+gsutil iam ch "serviceAccount:${VM_SERVICE_ACCOUNT_EMAIL}:roles/storage.objectAdmin" \
+  "gs://${GCS_BACKUP_BUCKET}"
+```
+
+Verify access (should list the empty bucket without error):
+
+```sh
+gsutil ls "gs://${GCS_BACKUP_BUCKET}"
+```
+
+### 11.3 Install cron jobs
+
+From the repo on the VM:
+
+```sh
+cd /path/to/cultivlab-platform
+
+# Preview what will be installed — no changes
+sudo bash scripts/install-crontab.sh --dry-run
+
+# Install /etc/cron.d/cultivlab-ops and /etc/logrotate.d/cultivlab-ops
+sudo bash scripts/install-crontab.sh
+```
+
+This writes:
+
+- `/etc/cron.d/cultivlab-ops` — three jobs at 02:00, 23:00, 23:30 UTC
+- `/etc/logrotate.d/cultivlab-ops` — daily rotation, 14-day retention
+- `/var/log/cultivlab/` — log directory (mode 750)
+
+The script is idempotent; re-run it whenever the scripts directory path changes.
+
+### 11.4 Verify each script manually
+
+Test each script immediately after install. Run them with `--dry-run` first, then live if the
+dry-run looks correct.
+
+```sh
+# Daily summary (dry-run: uses stub data, no Slack post)
+sudo bash scripts/daily-summary.sh --dry-run
+
+# Daily summary (live: posts to #cultivlab-reports)
+sudo bash scripts/daily-summary.sh --force
+
+# Weekly cap enforcer (dry-run: shows what would be blocked)
+sudo bash scripts/weekly-cap-enforcer.sh --dry-run
+
+# Backup (dry-run: shows what would be uploaded)
+sudo bash scripts/backup-postgres.sh --dry-run
+
+# Backup (live: pg_dump → GCS, Slack success notification to #cultivlab-platform)
+sudo bash scripts/backup-postgres.sh --force
+
+# Verify backup landed in GCS
+source /opt/cultivlab/.env
+gsutil ls "gs://${GCS_BACKUP_BUCKET}/daily/"
+```
+
+### 11.5 Verify restore (sanity — Phase 1 only)
+
+Run a Phase 1 restore to confirm the backup you just created is valid:
+
+```sh
+source /opt/cultivlab/.env
+LATEST="$(gsutil ls gs://${GCS_BACKUP_BUCKET}/daily/*.sql.gz | sort | tail -1)"
+echo "Restoring: ${LATEST}"
+sudo bash scripts/restore-postgres.sh "${LATEST}" --dry-run   # preview
+sudo bash scripts/restore-postgres.sh "${LATEST}"             # Phase 1: temp DB + sanity check
+```
+
+A successful Phase 1 restore prints `phase1: complete sanity=OK tables=N` and drops the temp
+database. For a full production restore procedure, see `docs/runbooks/backup-restore.md`.
+
+### 11.6 Verify cron is scheduled
+
+```sh
+cat /etc/cron.d/cultivlab-ops         # confirm entries
+sudo systemctl status cron            # confirm cron daemon is running
+tail -20 /var/log/cultivlab/backup-postgres.log   # after 02:00 UTC, should have entries
+```
+
+---
+
+## 12. Pre-cohort hardening checklist
 
 _Filled in Sprint 5/6._
 
