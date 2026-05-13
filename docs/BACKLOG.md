@@ -302,11 +302,13 @@ connections." Risk is low for cohort-1-2026 (students are 8–12, unlikely to ha
 be fixed before any cohort where participants are older or more technical.
 
 **Fix:** After cohort-1-2026 ends, upgrade Open WebUI:
+
 ```sh
 cd /opt/cultivlab/infra
 sudo docker compose pull open-webui
 sudo docker compose --env-file /opt/cultivlab/.env up -d open-webui
 ```
+
 Then in Admin Panel → Settings → Users, disable "Allow users to add connections."
 
 **When to fix:** Before cohort-2 onboarding.
