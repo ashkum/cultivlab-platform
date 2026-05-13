@@ -1,6 +1,6 @@
 # CultivLab Platform — Project Brief
 
-**Living document. Update at the start of every sprint.** Last updated: Sprint 7 — v0.7.0
+**Living document. Update at the start of every sprint.** Last updated: Sprint 8 — v0.8.0
 
 ---
 
@@ -121,7 +121,7 @@ Core required vars: `DOMAIN`, `GCP_PROJECT_ID`, `ANTHROPIC_API_KEY`, `OPENAI_API
 
 ## Current version
 
-**v0.7.0** — Sprint 7 (pre-cohort hardening)
+**v0.8.0** — Sprint 8 (pre-cohort-2 hardening)
 
 Operational correctness pass before a real student cohort runs. No new features — all changes close
 gaps that would cause friction or silent failures on Day 1:
@@ -157,6 +157,7 @@ gaps that would cause friction or silent failures on Day 1:
 | v0.5.5  | Sprint 5.5 | 2026-05-12 | Founder Console at founder.${DOMAIN}: student grid, pause/resume, topup, bcrypt auth, IP-locked                                            |
 | v0.6.0  | Sprint 6   | 2026-05-12 | Founder Console: OW account suspend (best-effort), dashboard auto-refresh (HX-Refresh) after all actions                                   |
 | v0.7.0  | Sprint 7   | 2026-05-12 | Pre-cohort hardening: .env symlink, Caddy auto-restart, reset-student-password.sh, OW suspend 422 fix, branding, install.md §7-8, runbooks |
+| v0.8.0  | Sprint 8   | 2026-05-13 | OW upgrade to v0.9.5, student-onboarding.md, install.md §7-8 fixes, OpenAI key rotation, test user cleanup                                 |
 
 ---
 

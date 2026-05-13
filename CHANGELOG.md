@@ -9,6 +9,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [v0.8.0] — 2026-05-13 — Sprint 8 wrap
+
+### Added
+
+- `docs/student-onboarding.md` — full student guide replacing all placeholders: onboarding card,
+  chat login, VS Code install, Continue.dev config (all 3 models), Live Server preview, operator-
+  assisted deploy workflow, daily iterate loop, getting-help table
+- `docs/sprint-reports/sprint-8.md` — Sprint 8 completion report
+
+### Changed
+
+- `docs/install.md` — §7.2: added "set Default User Role to user" step (missing, caused students to
+  land in pending state); §7.5 (new): "Create Public workspace models" — required step, students see
+  0 models without it; §8.2: corrected generate-cards.sh output from "PDF" to "markdown files";
+  §8.5–8.6 (new): provision-all.sh and push-env.sh usage documented
+- `.env.example` — `OPENWEBUI_VERSION` updated from `0.5.20` to `0.9.5`
+- `docs/PROJECT_BRIEF.md` — version updated to v0.8.0
+
+### Fixed
+
+- `OPENAI_API_KEY` in `.env` was a revoked key — updated to the active replacement key; GPT-4o mini
+  chat restored
+- Open WebUI upgraded v0.5.20 → v0.9.5: Direct Connections disabled by default (students can no
+  longer add own API keys); disk freed on VM before pull (76% → 43% used)
+
+### Removed
+
+- Test Student A and Test Student B accounts deleted from Open WebUI
+
 ## [v0.7.0] — 2026-05-12 — Sprint 7 wrap
 
 ### Added

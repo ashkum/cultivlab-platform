@@ -381,6 +381,10 @@ must create it before disabling signup.
 Set `OPENWEBUI_ADMIN_EMAIL` and `OPENWEBUI_ADMIN_PASSWORD` in `.env` to match the values you just
 used. These credentials are required by `provision-students.sh` and `reset-student-password.sh`.
 
+**Set default user role to `user`:** In Admin Panel → Settings → General, find **Default User Role**
+and set it to `user` (not `pending`). If left as `pending`, provisioned student accounts will be in
+a pending state and cannot log in without manual admin approval.
+
 ### 7.3 Disable student self-registration
 
 Once the admin account exists, prevent students from self-registering:
@@ -416,13 +420,31 @@ docker compose -f /opt/cultivlab/infra/docker-compose.yml logs open-webui --tail
 Common cause: `OPENAI_API_KEYS` in the Open WebUI container does not match `LITELLM_MASTER_KEY`.
 Re-verify `.env` and force-recreate both services.
 
-### 7.5 Verify kid-mode system prompt
+### 7.5 Create Public workspace models (required — students see 0 models otherwise)
+
+Models from the LiteLLM API connection are visible to admin only by default. You must create Public
+workspace models so students can select them in the chat interface.
+
+In Admin Panel → **Workspace → Models**, click **+** to create each model:
+
+| Model ID            | Display name                 | Base model          |
+| ------------------- | ---------------------------- | ------------------- |
+| `claude-sonnet-4-6` | Claude (CultivLab)           | `claude-sonnet-4-6` |
+| `gpt-4o-mini`       | GPT-4o mini (CultivLab)      | `gpt-4o-mini`       |
+| `gemini-2.5-flash`  | Gemini 2.5 Flash (CultivLab) | `gemini-2.5-flash`  |
+
+For each: set **Visibility** to **Public**. Leave all other fields at defaults.
+
+Verify by logging in as a test student account — the model dropdown must show all three models.
+Without this step, students will see an empty model list even after a successful login.
+
+### 7.6 Verify kid-mode system prompt
 
 In the Open WebUI admin panel → **Admin → Settings → General**, confirm the **System Prompt** field
 contains the value from `KID_MODE_SYSTEM_PROMPT` in `.env`. If it is blank, paste the value in and
 click **Save**.
 
-### 7.6 Verify branding
+### 7.7 Verify branding
 
 The login page title and header should read **"Sign in to CultivLab"** (or whatever `WEBUI_NAME` is
 set to in `.env`), not "Sign in to Open WebUI". If it still shows "Open WebUI", confirm `WEBUI_NAME`
@@ -464,8 +486,9 @@ failure, `2` partial success — re-run to retry failed rows.
 bash scripts/generate-cards.sh
 ```
 
-Produces one printable PDF card per student with their chat URL, email, and password. Print and hand
-out in person — never email or Slack plaintext passwords.
+Produces one markdown file per student (in `onboarding-cards-${COHORT_NAME}/`) containing their chat
+URL, email, password, API key, and personal site URL. Print or convert to PDF to hand out in person
+— never email or Slack plaintext credentials.
 
 ### 8.3 Verify a student can log in
 
@@ -486,6 +509,29 @@ bash scripts/reset-student-password.sh \
 
 Prints the new password to stdout and updates `cohort-students-${COHORT_NAME}.csv` automatically.
 Use `--password <value>` to supply a specific password instead of a random one.
+
+### 8.5 One-command provisioning (recommended for repeat cohorts)
+
+`scripts/provision-all.sh` runs all four provisioning steps in sequence (cohort keys → OW accounts →
+site slots → onboarding cards) then calls `push-env.sh` to sync the updated `.env` to the VM:
+
+```sh
+bash scripts/provision-all.sh --dir ~/Desktop/cultivlab-cohort-1-2026
+bash scripts/provision-all.sh --dir ~/Desktop/cultivlab-cohort-1-2026 --dry-run
+```
+
+The `--dir` argument must point to a folder containing `students.csv`. All output CSVs and
+onboarding cards are written to the same folder.
+
+### 8.6 Sync `.env` changes to VM
+
+Any time you change `.env` on your laptop (new COHORT_NAME, rotated key, updated FOUNDER_ALLOWED_IP
+etc.), push the change to the VM and restart affected services:
+
+```sh
+bash scripts/push-env.sh          # restart founder-console only
+bash scripts/push-env.sh --all    # also restart litellm (use after provider key rotation)
+```
 
 ---
 
