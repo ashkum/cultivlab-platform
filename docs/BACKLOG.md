@@ -289,6 +289,30 @@ steps.
 
 **When to fix:** Sprint 6 docs pass.
 
+## Upgrade Open WebUI to v0.9.5+ before next cohort
+
+**Priority:** high (do before next cohort) **Source:** May 12, 2026 cohort-1-2026 session
+
+**Context:** Open WebUI v0.5.20 does not have a UI toggle to prevent regular users from adding their
+own model connections (Settings → Connections → Add). A student who knows their own OpenAI/Anthropic
+API key could bypass LiteLLM entirely, evading budget enforcement.
+
+v0.9.5 (current as of May 2026) adds granular user permission controls including "Allow users to add
+connections." Risk is low for cohort-1-2026 (students are 8–12, unlikely to have API keys), but must
+be fixed before any cohort where participants are older or more technical.
+
+**Fix:** After cohort-1-2026 ends, upgrade Open WebUI:
+```sh
+cd /opt/cultivlab/infra
+sudo docker compose pull open-webui
+sudo docker compose --env-file /opt/cultivlab/.env up -d open-webui
+```
+Then in Admin Panel → Settings → Users, disable "Allow users to add connections."
+
+**When to fix:** Before cohort-2 onboarding.
+
+---
+
 ## .env files should never be cat'd in screensharing/chat contexts
 
 **Priority:** low (lesson learned, documentation only) **Source:** 2026-05-11 OPENAI_API_KEY
