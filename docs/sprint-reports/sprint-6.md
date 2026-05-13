@@ -1,17 +1,14 @@
 # Sprint 6 — Operational UI: OW Account Suspend + Dashboard Auto-Refresh
 
-**Version:** v0.6.0
-**Tag:** v0.6.0
-**Status:** Complete
-**Date:** 2026-05-12
+**Version:** v0.6.0 **Tag:** v0.6.0 **Status:** Complete **Date:** 2026-05-12
 
 ---
 
 ## Goal
 
 Make Founder Console actions actually complete: pause/resume a student now suspends both their
-LiteLLM virtual key and their Open WebUI account. Dashboard status badges refresh automatically after
-every action without requiring a manual page reload.
+LiteLLM virtual key and their Open WebUI account. Dashboard status badges refresh automatically
+after every action without requiring a manual page reload.
 
 ---
 
@@ -61,8 +58,8 @@ Added a `_refresh()` helper and a `"warn"` (amber) flash kind to
 ## Known limitations at close
 
 - OW role→pending suspend was unverified against live v0.5.20 at commit time. Fixed in Sprint 7
-  (D6): `_ow_find_user_id` renamed to `_ow_find_user` (returns full dict), `_ow_set_role` updated
-  to send complete `UserUpdateForm` payload resolving HTTP 422.
+  (D6): `_ow_find_user_id` renamed to `_ow_find_user` (returns full dict), `_ow_set_role` updated to
+  send complete `UserUpdateForm` payload resolving HTTP 422.
 
 ---
 
