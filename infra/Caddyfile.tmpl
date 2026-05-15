@@ -71,7 +71,6 @@ l01.${DOMAIN}, l02.${DOMAIN}, l03.${DOMAIN}, l04.${DOMAIN}, l05.${DOMAIN}, l06.$
 	# Caddy injects the slot name (e.g. "l01") so the app knows which
 	# directory to write to without parsing the Host header itself.
 	handle /upload* {
-		header_up X-Student-Slot {labels.2}
 		reverse_proxy founder-console:8080
 	}
 

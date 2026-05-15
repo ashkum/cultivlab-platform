@@ -55,6 +55,13 @@ _SLOT_RE = re.compile(r"^l\d{2}$")
 
 
 def _get_slot(request: Request) -> str | None:
+    # Derive slot from the Host header (e.g. "l01.cultivlab.com" → "l01").
+    # Falls back to X-Student-Slot for local testing / alternative routing.
+    host = request.headers.get("host", "").split(":")[0].lower()
+    slot = host.split(".")[0]  # first label of the hostname
+    if _SLOT_RE.match(slot):
+        return slot
+    # Fallback: explicit header (e.g. set by a test client)
     slot = request.headers.get("X-Student-Slot", "").strip().lower()
     return slot if _SLOT_RE.match(slot) else None
 
