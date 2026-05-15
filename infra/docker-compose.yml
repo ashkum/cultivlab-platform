@@ -170,8 +170,10 @@ services:
       OPENWEBUI_URL: ${OPENWEBUI_URL:-http://open-webui:8080}
       OPENWEBUI_ADMIN_EMAIL: ${OPENWEBUI_ADMIN_EMAIL}
       OPENWEBUI_ADMIN_PASSWORD: ${OPENWEBUI_ADMIN_PASSWORD}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_INTERNAL_URL: http://litellm:4000
     volumes:
-      - /srv/students:/srv/students:ro
+      - /srv/students:/srv/students
     networks:
       - cultivlab-net
     healthcheck:

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__STUDENT_NAME__'s CultivLab Site</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  min-height: 100vh;
+  color: white;
+  padding: 24px 16px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  margin-bottom: 32px;
+  text-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
+  letter-spacing: 2px;
+}
+
+.page { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(100,200,255,0.2);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.card h2 { font-size: 1.3rem; color: #64c8ff; margin-bottom: 16px; letter-spacing: 1px; }
+
+/* ── Instructions ── */
+.instructions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+
+.tip {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(100,200,255,0.08);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  border: 1px solid rgba(100,200,255,0.15);
+}
+
+.tip strong { color: #64c8ff; display: block; margin-bottom: 6px; font-size: 0.95rem; }
+
+/* ── Drop zone ── */
+.drop-zone {
+  border: 2px dashed rgba(100,200,255,0.4);
+  border-radius: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  margin-bottom: 14px;
+}
+
+.drop-zone.drag-over { background: rgba(100,200,255,0.12); border-color: #64c8ff; }
+.drop-zone p { color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 0.95rem; }
+
+#fileInput { display: none; }
+
+.choose-btn {
+  background: linear-gradient(135deg, #64c8ff, #0070ff);
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 0 12px rgba(100,200,255,0.3);
+}
+
+.choose-btn:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(100,200,255,0.6); }
+
+#selectedFiles { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+.file-chip {
+  background: rgba(100,200,255,0.15);
+  border: 1px solid rgba(100,200,255,0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  color: #64c8ff;
+}
+
+.upload-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: #0f3460;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.upload-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.upload-btn:not(:disabled):hover { transform: scale(1.02); }
+
+/* ── Result messages ── */
+#uploadResult { margin-top: 14px; }
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.result-ok { background: rgba(67,233,123,0.12); border: 1px solid rgba(67,233,123,0.3); }
+.result-error { background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.3); }
+.result-warn { background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.3); }
+
+/* ── Confirm overlay ── */
+#confirmOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  align-items: center; justify-content: center;
+  z-index: 100;
+}
+
+#confirmOverlay.show { display: flex; }
+
+.confirm-box {
+  background: #16213e;
+  border: 1px solid rgba(100,200,255,0.3);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.confirm-box h3 { color: #ffd700; margin-bottom: 12px; }
+.confirm-box p { color: rgba(255,255,255,0.75); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+.btn-cancel {
+  padding: 10px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+  background: transparent; color: white; cursor: pointer; font-size: 0.9rem;
+}
+
+.btn-overwrite {
+  padding: 10px 20px; border-radius: 20px; border: none;
+  background: linear-gradient(135deg, #ff6b6b, #ff4444);
+  color: white; cursor: pointer; font-size: 0.9rem; font-weight: bold;
+}
+
+/* ── Files list ── */
+#filesList { display: flex; flex-direction: column; gap: 8px; }
+
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.file-row a { color: #64c8ff; text-decoration: none; font-size: 0.95rem; }
+.file-row a:hover { text-decoration: underline; }
+.file-ext { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-left: 8px; }
+
+.empty-msg { color: rgba(255,255,255,0.4); font-size: 0.9rem; text-align: center; padding: 12px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1>🚀 __STUDENT_NAME__'s Site</h1>
+
+  <!-- Upload card -->
+  <div class="card">
+    <h2>📁 Upload Your Files</h2>
+
+    <div class="instructions">
+      <div class="tip">
+        <strong>💻 From VS Code</strong>
+        Right-click your file in the Explorer sidebar → <em>Reveal in Finder</em>
+        (Mac) or <em>Reveal in File Explorer</em> (Windows) → drag the file into
+        the box below, or click Choose Files and pick it.
+      </div>
+      <div class="tip">
+        <strong>🤖 From the chat tab</strong>
+        Keep this page open in another browser tab. When your file is ready,
+        come back here and click <em>Choose Files</em> to upload it.
+      </div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <p>🗂 Drag your file here, or</p>
+      <button class="choose-btn" onclick="document.getElementById('fileInput').click()">
+        Choose Files
+      </button>
+      <input type="file" id="fileInput" multiple
+        accept=".html,.htm,.css,.js,.jpg,.jpeg,.png,.gif,.svg,.webp,.ico">
+      <div id="selectedFiles"></div>
+    </div>
+
+    <button class="upload-btn" id="uploadBtn" disabled onclick="startUpload(false)">
+      ⬆️ Upload &amp; Publish
+    </button>
+
+    <div id="uploadResult"></div>
+  </div>
+
+  <!-- Published files card -->
+  <div class="card">
+    <h2>🌐 Your Published Files</h2>
+    <div id="filesList"><p class="empty-msg">Loading…</p></div>
+  </div>
+</div>
+
+<!-- Overwrite confirm overlay -->
+<div id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>⚠️ File already exists</h3>
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-overwrite" onclick="startUpload(true)">Yes, overwrite</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STUDENT_KEY  = "__STUDENT_API_KEY__";
+const STUDENT_SLOT = "__STUDENT_SLOT__";
+
+let pendingFiles = null;
+
+// ── File picker / drag-drop ──────────────────────────────────────────────
+
+const fileInput = document.getElementById('fileInput');
+const dropZone  = document.getElementById('dropZone');
+const uploadBtn = document.getElementById('uploadBtn');
+
+fileInput.addEventListener('change', () => setFiles(fileInput.files));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  setFiles(e.dataTransfer.files);
+});
+
+function setFiles(files) {
+  pendingFiles = files;
+  const chips = document.getElementById('selectedFiles');
+  chips.innerHTML = '';
+  for (const f of files) {
+    const chip = document.createElement('span');
+    chip.className = 'file-chip';
+    chip.textContent = f.name;
+    chips.appendChild(chip);
+  }
+  uploadBtn.disabled = files.length === 0;
+  document.getElementById('uploadResult').innerHTML = '';
+}
+
+// ── Upload ───────────────────────────────────────────────────────────────
+
+async function startUpload(force) {
+  if (!pendingFiles || pendingFiles.length === 0) return;
+  closeConfirm();
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = '⏳ Uploading…';
+  document.getElementById('uploadResult').innerHTML = '';
+
+  const fd = new FormData();
+  for (const f of pendingFiles) fd.append('files', f);
+
+  const url = force ? '/upload?force=true' : '/upload';
+
+  let resp, data;
+  try {
+    resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + STUDENT_KEY },
+      body: fd,
+    });
+    data = await resp.json();
+  } catch (err) {
+    showResult([{ type: 'error', msg: 'Network error — try again.' }]);
+    resetBtn();
+    return;
+  }
+
+  if (resp.status === 409) {
+    const names = data.conflicts.join(', ');
+    document.getElementById('confirmMsg').textContent =
+      names + (data.conflicts.length === 1 ? ' already exists.' : ' already exist.')
+      + ' Do you want to overwrite?';
+    document.getElementById('confirmOverlay').classList.add('show');
+    resetBtn();
+    return;
+  }
+
+  if (resp.status === 401) {
+    showResult([{ type: 'error', msg: 'Upload key is invalid — tell your instructor.' }]);
+    resetBtn();
+    return;
+  }
+
+  const msgs = [];
+  for (const u of (data.uploaded || [])) {
+    msgs.push({ type: 'ok', msg: `✅ ${u.file} published`, url: u.url });
+  }
+  for (const c of (data.conflicts || [])) {
+    msgs.push({ type: 'warn', msg: `⚠️ ${c} skipped (already exists)` });
+  }
+  for (const e of (data.errors || [])) {
+    msgs.push({ type: 'error', msg: `❌ ${e.file}: ${e.reason}` });
+  }
+
+  showResult(msgs);
+  resetBtn();
+
+  if ((data.uploaded || []).length > 0) {
+    fileInput.value = '';
+    pendingFiles = null;
+    document.getElementById('selectedFiles').innerHTML = '';
+    loadFiles();
+  }
+}
+
+function showResult(msgs) {
+  const el = document.getElementById('uploadResult');
+  el.innerHTML = msgs.map(m => {
+    const cls = m.type === 'ok' ? 'result-ok' : m.type === 'warn' ? 'result-warn' : 'result-error';
+    const link = m.url
+      ? ` <a href="${m.url}" target="_blank" style="color:#43e97b;font-size:0.8rem">Open →</a>`
+      : '';
+    return `<div class="result-item ${cls}">${m.msg}${link}</div>`;
+  }).join('');
+}
+
+function resetBtn() {
+  uploadBtn.disabled = !pendingFiles || pendingFiles.length === 0;
+  uploadBtn.textContent = '⬆️ Upload & Publish';
+}
+
+// ── Confirm overlay ──────────────────────────────────────────────────────
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+}
+
+// ── File list ────────────────────────────────────────────────────────────
+
+async function loadFiles() {
+  const el = document.getElementById('filesList');
+  try {
+    const resp = await fetch('/upload/files', {
+      headers: { 'Authorization': 'Bearer ' + STUDENT_KEY },
+    });
+    const data = await resp.json();
+    if (!data.files || data.files.length === 0) {
+      el.innerHTML = '<p class="empty-msg">No files yet — upload your first one above!</p>';
+      return;
+    }
+    el.innerHTML = data.files.map(f => `
+      <div class="file-row">
+        <span>📄 <a href="${f.url}" target="_blank">${f.name}</a>
+          <span class="file-ext">${f.url}</span>
+        </span>
+      </div>`).join('');
+  } catch {
+    el.innerHTML = '<p class="empty-msg">Could not load file list.</p>';
+  }
+}
+
+loadFiles();
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aarav's Page</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  min-height: 100vh;
+  color: white;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
+  letter-spacing: 2px;
+}
+
+.main-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+/* ── Photo section ── */
+.photo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.photo-section h2 { font-size: 1.5rem; letter-spacing: 1px; color: #64c8ff; }
+
+.color-box {
+  padding: 15px;
+  border-radius: 20px;
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+  border: 8px solid #ff6b6b;
+  box-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
+}
+
+.color-box img {
+  width: 280px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #64c8ff, #0070ff);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 15px rgba(100, 200, 255, 0.4);
+}
+
+.upload-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(100, 200, 255, 0.7); }
+
+#fileInput { display: none; }
+
+/* ── Tic-tac-toe section ── */
+.ttt-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.ttt-section h2 { font-size: 1.5rem; letter-spacing: 1px; color: #64c8ff; }
+
+.ttt-status {
+  font-size: 1.1rem;
+  min-height: 1.5em;
+  text-align: center;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 8px;
+}
+
+.ttt-cell {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(100, 200, 255, 0.4);
+  border-radius: 12px;
+  font-size: 2.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.ttt-cell:hover:not(.taken) { background: rgba(100, 200, 255, 0.15); transform: scale(1.05); }
+.ttt-cell.taken { cursor: default; }
+.ttt-cell.x { color: #ff6b6b; text-shadow: 0 0 12px rgba(255,107,107,0.8); }
+.ttt-cell.o { color: #64c8ff; text-shadow: 0 0 12px rgba(100,200,255,0.8); }
+.ttt-cell.win { background: rgba(255, 215, 0, 0.2); border-color: #ffd700; }
+
+.reset-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ff4444);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+}
+
+.reset-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,107,107,0.7); }
+</style>
+</head>
+<body>
+
+<h1>✨ Aarav's Page ✨</h1>
+
+<div class="main-container">
+
+  <!-- Photo -->
+  <div class="photo-section">
+    <h2>📷 My Photo</h2>
+    <div class="color-box">
+      <img id="photo" src="https://placehold.co/280x320/1a1a2e/64c8ff?text=Upload+a+photo" alt="Aarav's photo">
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+      📁 Upload Photo
+    </button>
+  </div>
+
+  <!-- Tic-Tac-Toe -->
+  <div class="ttt-section">
+    <h2>🎮 Tic-Tac-Toe vs AI</h2>
+    <p class="ttt-status" id="status">Your turn! You are ✕</p>
+    <div class="ttt-board" id="board">
+      <div class="ttt-cell" onclick="playerMove(0)"></div>
+      <div class="ttt-cell" onclick="playerMove(1)"></div>
+      <div class="ttt-cell" onclick="playerMove(2)"></div>
+      <div class="ttt-cell" onclick="playerMove(3)"></div>
+      <div class="ttt-cell" onclick="playerMove(4)"></div>
+      <div class="ttt-cell" onclick="playerMove(5)"></div>
+      <div class="ttt-cell" onclick="playerMove(6)"></div>
+      <div class="ttt-cell" onclick="playerMove(7)"></div>
+      <div class="ttt-cell" onclick="playerMove(8)"></div>
+    </div>
+    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+  </div>
+
+</div>
+
+<script>
+  // ── Photo upload ──
+  document.getElementById('fileInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      document.getElementById('photo').src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ── Tic-Tac-Toe ──
+  const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  let board, gameOver, playerTurn;
+
+  function resetGame() {
+    board = Array(9).fill('');
+    gameOver = false;
+    playerTurn = true;
+    document.getElementById('status').textContent = 'Your turn! You are ✕';
+    document.querySelectorAll('.ttt-cell').forEach(c => {
+      c.textContent = '';
+      c.className = 'ttt-cell';
+      c.onclick = function () { playerMove(parseInt(this.dataset.idx)); };
+    });
+    document.querySelectorAll('.ttt-cell').forEach((c, i) => c.dataset.idx = i);
+  }
+
+  function playerMove(idx) {
+    if (gameOver || !playerTurn || board[idx]) return;
+    makeMove(idx, 'X');
+    if (!gameOver) {
+      playerTurn = false;
+      document.getElementById('status').textContent = '🤖 AI is thinking…';
+      setTimeout(aiMove, 400);
+    }
+  }
+
+  function aiMove() {
+    const best = minimax(board, 'O');
+    makeMove(best.idx, 'O');
+    if (!gameOver) {
+      playerTurn = true;
+      document.getElementById('status').textContent = 'Your turn! You are ✕';
+    }
+  }
+
+  function makeMove(idx, player) {
+    board[idx] = player;
+    const cell = document.querySelectorAll('.ttt-cell')[idx];
+    cell.textContent = player === 'X' ? '✕' : '○';
+    cell.classList.add('taken', player.toLowerCase());
+
+    const win = checkWin(board, player);
+    if (win) {
+      win.forEach(i => document.querySelectorAll('.ttt-cell')[i].classList.add('win'));
+      document.getElementById('status').textContent =
+        player === 'X' ? '🎉 You win! Amazing!' : '🤖 AI wins! Try again!';
+      gameOver = true;
+    } else if (board.every(Boolean)) {
+      document.getElementById('status').textContent = "🤝 It's a draw!";
+      gameOver = true;
+    }
+  }
+
+  function checkWin(b, p) {
+    return WINS.find(([a, c, d]) => b[a] === p && b[c] === p && b[d] === p) || null;
+  }
+
+  function minimax(b, player) {
+    if (checkWin(b, 'O')) return { score: 10 };
+    if (checkWin(b, 'X')) return { score: -10 };
+    const empty = b.map((v, i) => v ? null : i).filter(i => i !== null);
+    if (!empty.length) return { score: 0 };
+
+    const moves = empty.map(idx => {
+      b[idx] = player;
+      const result = minimax(b, player === 'O' ? 'X' : 'O');
+      b[idx] = '';
+      return { idx, score: result.score };
+    });
+
+    return player === 'O'
+      ? moves.reduce((a, m) => m.score > a.score ? m : a)
+      : moves.reduce((a, m) => m.score < a.score ? m : a);
+  }
+
+  resetGame();
+</script>
+</body>
+</html>

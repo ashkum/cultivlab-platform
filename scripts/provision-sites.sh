@@ -106,6 +106,7 @@ require_var VM_NAME
 
 CSV_PATH="${COHORT_STUDENTS_CSV_PATH:-$REPO_ROOT/cohort-students-${COHORT_NAME}.csv}"
 TEMPLATE_DIR="${TEMPLATE_DIR:-$REPO_ROOT/templates/student-starter}"
+PORTAL_TEMPLATE="${PORTAL_TEMPLATE:-$REPO_ROOT/templates/student-portal/index.html}"
 OUTPUT_CSV="${OUTPUT_CSV:-$REPO_ROOT/cohort-slots-${COHORT_NAME}.csv}"
 MAX_SLOTS="${MAX_SLOTS:-12}"
 
@@ -123,12 +124,16 @@ if [[ ! -d "$TEMPLATE_DIR" ]]; then
   exit 1
 fi
 
-for required_file in index.html README.md; do
-  if [[ ! -f "$TEMPLATE_DIR/$required_file" ]]; then
-    log error "required template file missing: $TEMPLATE_DIR/$required_file"
-    exit 1
-  fi
-done
+if [[ ! -f "$TEMPLATE_DIR/README.md" ]]; then
+  log error "required template file missing: $TEMPLATE_DIR/README.md"
+  exit 1
+fi
+
+if [[ ! -f "$PORTAL_TEMPLATE" ]]; then
+  log error "portal template not found: $PORTAL_TEMPLATE"
+  log error "expected: templates/student-portal/index.html"
+  exit 1
+fi
 
 # Verify header matches Sprint 3 output schema
 EXPECTED_HEADER="slug,owui_user_id,email,owui_password,litellm_key"
@@ -180,11 +185,11 @@ log info "step 3/6: assigning slots l01..l$(printf '%02d' "$STUDENT_COUNT")"
 TEMP_OUTPUT="$(mktemp)"
 trap 'rm -f "$TEMP_OUTPUT"' EXIT
 
-echo "slug,slot,site_url,name" >"$TEMP_OUTPUT"
+echo "slug,slot,site_url,name,litellm_key" >"$TEMP_OUTPUT"
 
 slot_num=1
 # Read CSV body (skip header)
-tail -n +2 "$CSV_PATH" | while IFS=, read -r slug _owui_user_id email _owui_pw _litellm_key; do
+tail -n +2 "$CSV_PATH" | while IFS=, read -r slug _owui_user_id email _owui_pw litellm_key; do
   slot=$(printf 'l%02d' "$slot_num")
 
   # Default student name from slug if no first-name lookup available
@@ -193,7 +198,7 @@ tail -n +2 "$CSV_PATH" | while IFS=, read -r slug _owui_user_id email _owui_pw _
 
   site_url="https://${slot}.${DOMAIN}"
   log info "slot ${slot} → ${slug} (${email})"
-  echo "${slug},${slot},${site_url},${name}" >>"$TEMP_OUTPUT"
+  echo "${slug},${slot},${site_url},${name},${litellm_key}" >>"$TEMP_OUTPUT"
 
   slot_num=$((slot_num + 1))
 done
@@ -210,15 +215,21 @@ else
   # Iterate the OUTPUT csv (which has the slot mapping).
   # Use process substitution to avoid subshell from pipe; lets exit 2
   # propagate from inside the loop.
-  while IFS=, read -r slug slot site_url name; do
+  while IFS=, read -r slug slot site_url name litellm_key; do
     slot_dir="$render_dir/$slot"
     mkdir -p "$slot_dir"
 
-    # Customize index.html with student's name (replace the placeholder greeting)
-    sed "s|Hi, I'm a CultivLab student!|Hi, I'm ${name} — welcome to my site!|" \
-      "$TEMPLATE_DIR/index.html" >"$slot_dir/index.html"
+    # Render the student portal (index.html) with per-student values baked in.
+    # __STUDENT_NAME__    → student slug (used as display name)
+    # __STUDENT_API_KEY__ → LiteLLM virtual key (auth for upload endpoint)
+    # __STUDENT_SLOT__    → slot identifier (e.g. l01)
+    sed \
+      -e "s|__STUDENT_NAME__|${name}|g" \
+      -e "s|__STUDENT_API_KEY__|${litellm_key}|g" \
+      -e "s|__STUDENT_SLOT__|${slot}|g" \
+      "$PORTAL_TEMPLATE" >"$slot_dir/index.html"
 
-    # README.md unchanged
+    # README.md unchanged — kept for context/reference in the slot directory
     cp "$TEMPLATE_DIR/README.md" "$slot_dir/README.md"
 
     # scp to /tmp/$slot/ then sudo-cp into /srv/students/$slot/

@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .auth import sign_cookie, verify_cookie, verify_password
-from .routes import dashboard, student
+from .routes import dashboard, student, upload
 
 # ---------------------------------------------------------------------------
 # App
@@ -47,6 +47,7 @@ app.state.templates = _templates
 
 app.include_router(dashboard.router)
 app.include_router(student.router)
+app.include_router(upload.router)
 
 
 # ---------------------------------------------------------------------------

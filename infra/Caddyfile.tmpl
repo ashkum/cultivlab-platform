@@ -65,7 +65,19 @@ founder.${DOMAIN} {
 #   3. Create /srv/students/lNN/ directory on VM
 #   4. Re-run scripts/bootstrap.sh
 l01.${DOMAIN}, l02.${DOMAIN}, l03.${DOMAIN}, l04.${DOMAIN}, l05.${DOMAIN}, l06.${DOMAIN} {
-	root * /srv/students/{labels.2}
-	file_server
 	encode zstd gzip
+
+	# Student file upload endpoint — routed to Founder Console.
+	# Caddy injects the slot name (e.g. "l01") so the app knows which
+	# directory to write to without parsing the Host header itself.
+	handle /upload* {
+		header_up X-Student-Slot {labels.2}
+		reverse_proxy founder-console:8080
+	}
+
+	# Everything else — static files from the slot directory.
+	handle {
+		root * /srv/students/{labels.2}
+		file_server
+	}
 }
