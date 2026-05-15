@@ -101,6 +101,32 @@ decision log: `docs/DECISION_LOG.md`.
 
 ---
 
+## Lessons from Sprints 2–9 (binding — read before touching VM or Caddy)
+
+1. Pre-commit hooks can drift from CI — pin both to same versions
+2. LiteLLM image has no curl — use Python urllib for healthchecks
+3. macOS bash 3.2 lacks associative arrays — use awk for portable CSV work
+4. gcloud ssh consumes stdin in loops — always `</dev/null`
+5. docker compose up -d does NOT restart running containers — explicit restart
+6. Mac BSD sed differs from Linux GNU sed in `-i` flag handling
+7. zsh heredocs choke on triple backticks — save to file first
+8. Pre-commit's stash-and-restore can conflict with prettier auto-fixes — `git add -A` after
+   pre-commit
+9. **Caddy reads `/opt/cultivlab/infra/Caddyfile`**, not the repo copy. Verify mount paths with
+   `docker inspect` before editing. `restart` reuses original mounts.
+10. **`header_up` must be inside `reverse_proxy {}`, not at `handle` level.** Caddy placeholders
+    like `{labels.2}` may not work inside `header_up` values — derive slot from the `Host` header in
+    the app instead.
+11. **`docker compose restart` does not rebuild.** For code changes: `build` then `up -d`. For
+    env/config-only changes: `restart` is fine.
+12. **Always pass `--env-file /opt/cultivlab/.env`** when running docker compose with
+    `-f repo/infra/docker-compose.yml`. Without it all vars default to blank.
+13. **VM repo files can be owned by root** after a previous `sudo git pull`. Fix:
+    `sudo chown -R $(whoami):$(whoami) /opt/cultivlab/repo` before pulling.
+14. Full VM deploy procedure and failure modes: `docs/runbooks/vm-deploy.md`
+
+---
+
 ## Quick reference
 
 | What you need           | Where to find it                       |

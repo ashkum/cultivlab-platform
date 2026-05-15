@@ -67,10 +67,16 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$REPO_ROOT/.env"
 
 if [[ -f "$ENV_FILE" ]]; then
+  # Preserve any inline-set overrides across the source.
+  _saved_students="${COHORT_STUDENTS_CSV_PATH:-}"
+  _saved_slots="${COHORT_SLOTS_CSV_PATH:-}"
   set -a
   # shellcheck source=/dev/null
   source "$ENV_FILE"
   set +a
+  [[ -n "$_saved_students" ]] && COHORT_STUDENTS_CSV_PATH="$_saved_students"
+  [[ -n "$_saved_slots" ]] && COHORT_SLOTS_CSV_PATH="$_saved_slots"
+  unset _saved_students _saved_slots
 fi
 
 require_var() {
@@ -86,8 +92,8 @@ require_var GCP_PROJECT_ID
 require_var GCP_ZONE
 require_var VM_NAME
 
-STUDENTS_CSV="$REPO_ROOT/cohort-students-${COHORT_NAME}.csv"
-SLOTS_CSV="$REPO_ROOT/cohort-slots-${COHORT_NAME}.csv"
+STUDENTS_CSV="${COHORT_STUDENTS_CSV_PATH:-$REPO_ROOT/cohort-students-${COHORT_NAME}.csv}"
+SLOTS_CSV="${COHORT_SLOTS_CSV_PATH:-$REPO_ROOT/cohort-slots-${COHORT_NAME}.csv}"
 PORTAL_TEMPLATE="$REPO_ROOT/templates/student-portal/index.html"
 
 # ─── Validate inputs ─────────────────────────────────────────────────────────
